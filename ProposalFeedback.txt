@@ -1,0 +1,29 @@
+CMSI 4071 Fall 2025
+Project Proposal Feedback
+Project: Finance-Buddy
+=========================
+
+Proposal Document [3 points]:
+-----------------------------
+You still need a proposal document in your repository.  I can't evaluate
+what isn't there! :D  Make sure you do that and put it into place so I
+can give you some feedback on it.  Once it's there, you'll get the points
+for the evaluation.
+
+Proposal Presentation [2 points]:
+---------------------------------
+Your presentation was very good, met all the requirements as listed, and
+provided enough detail so the audience saw interested without having so
+much text that they couldn't read it all before the next slide appeared.
+I enjoyed the presentation and you answered questions well.  Good audience
+reception, too.  This will be a #VERY# interesting project!  So many folks
+have no idea about how to handle their finances or make a budget, and even
+we old folks can use help!
+
+Summary:
+--------
+Nice job overall!  Keep up the good work.
+
+2 out of 5 which is not the best on this deliverable.  Make sure you write
+and commit a proposal DOCUMENT for full points.
+
