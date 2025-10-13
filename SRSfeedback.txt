@@ -1,0 +1,85 @@
+
+Documentation Feedback ~ Deliverable #2
+Software Requirements Specification
+Initial Development Schedule
+CMSI 4071 Fall 2025
+=======================================
+
+COMPONENT BREAKDOWN:
+====================
+The introduction section is great!  Very complete and telling the reader
+what your application will do.  Having section 2 also there to describe
+the product perspective is somewhat unique and is a good addition.  The
+addition of user classes and constraints is also a great idea.  Nice!
+
+FUNCTIONAL REQUIREMENTS:
+========================
+Strengths
+   Extensive coverage of user needs across functional domains.
+   Acceptance criteria provide testable outcomes for many stories.
+   User-centric language supports empathy-driven design.
+   Includes admin and system-level features, not just end-user
+      functionality.
+
+Areas for Improvement
+   Some stories (e.g., FR15–FR20 on analytics) lack acceptance criteria.
+   Could benefit from epics and themes to group related stories for better
+      backlog management.
+   Dependencies or priorities between stories are not explicitly stated.
+
+PERFORMANCE REQUIREMENTS:
+=========================
+Strengths
+   Clear performance targets for key features.
+   Includes reliability and scalability goals.
+   Addresses autosave, offline mode, and session timeout, which are
+      performance-relevant.
+
+Areas for Improvement
+   No mention of load testing, concurrency, or response time under stress.
+   Could include performance acceptance criteria tied to specific
+      user stories.
+   Monitoring and alerting mechanisms are not described.
+
+ENVIRONMENT REQUIREMENTS:
+=========================
+Strengths
+   Clear articulation of platform and tech stack.
+   Addresses data flexibility (real vs. simulated).
+   Includes constraints like bank API limitations and fallback mechanisms.
+
+Areas for Improvement
+   No dedicated “Environment Requirements” section (common in traditional SRS).
+   Missing details on:
+      Supported OS versions
+      Minimum device specs
+      Network requirements
+      Third-party service quotas or limits
+
+
+OVERALL ASSESSMENT:
+   Category                          Points
+   Component Breakdown                 1/1
+   Functional Requirements             4/4
+   Performance Requirements            2/2
+   Environment Requirements            1/1
+                                     =====
+   Subtotal                            8/8
+   Preliminary Schedule                2/2   your schedule is fine but you
+                                             should consider a Gantt or a
+                                             PERT chart next iteration
+   ------------------------------------------------------
+   Total Percentage:   10/10 = 100% which is an A-plus
+
+
+This Agile SRS is well-structured and user-focused, making it highly
+actionable for iterative development. To further enhance its utility:
+   Introduce epics and themes to organize the backlog.
+   Ensure acceptance criteria are present for all user stories.
+   Consider adding Definition of Done and test cases for performance
+      and environmental aspects.
+
+Make sure you incorporate all the suggestions into the document by the end
+of the semester for full credit on this deliverable.
+
+Nice job!
