@@ -18,18 +18,30 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct finance_buddyApp: App {
-    // register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authManager = AuthenticationManager()
+    @StateObject private var firestoreManager = FirestoreManager()
+    @AppStorage("isDarkMode") private var isDarkMode = false
     
     var body: some Scene {
         WindowGroup {
             if authManager.user != nil {
                 ContentView()
                     .environmentObject(authManager)
+                    .environmentObject(firestoreManager)
+                    .preferredColorScheme(isDarkMode ? .dark : .light)
+                    .task {
+                        if let uid = authManager.user?.uid {
+                            try? await firestoreManager.fetchUserProfile(uid: uid)
+                            if let darkMode = firestoreManager.userProfile?.darkMode {
+                                isDarkMode = darkMode
+                            }
+                        }
+                    }
             } else {
                 AuthenticationView()
                     .environmentObject(authManager)
+                    .environmentObject(firestoreManager)
             }
         }
     }

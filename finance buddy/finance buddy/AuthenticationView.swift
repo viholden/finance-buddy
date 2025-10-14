@@ -9,8 +9,10 @@ import SwiftUI
 
 struct AuthenticationView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firestoreManager: FirestoreManager
     @State private var email = ""
     @State private var password = ""
+    @State private var name = ""
     @State private var isSignUpMode = false
     @State private var isLoading = false
     
@@ -18,7 +20,6 @@ struct AuthenticationView: View {
         VStack(spacing: 20) {
             Spacer()
             
-            // App Title
             Text("Finance Buddy")
                 .font(.largeTitle)
                 .fontWeight(.bold)
@@ -29,7 +30,13 @@ struct AuthenticationView: View {
             
             Spacer()
             
-            // Email Field
+            if isSignUpMode {
+                TextField("Name", text: $name)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .autocorrectionDisabled()
+                    .padding(.horizontal)
+            }
+            
             TextField("Email", text: $email)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textInputAutocapitalization(.never)
@@ -37,12 +44,10 @@ struct AuthenticationView: View {
                 .autocorrectionDisabled()
                 .padding(.horizontal)
             
-            // Password Field
             SecureField("Password", text: $password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
             
-            // Error Message
             if !authManager.errorMessage.isEmpty {
                 Text(authManager.errorMessage)
                     .foregroundColor(.red)
@@ -51,7 +56,6 @@ struct AuthenticationView: View {
                     .padding(.horizontal)
             }
             
-            // Sign In/Sign Up Button
             Button(action: {
                 handleAuthentication()
             }) {
@@ -71,9 +75,8 @@ struct AuthenticationView: View {
             .foregroundColor(.white)
             .cornerRadius(10)
             .padding(.horizontal)
-            .disabled(email.isEmpty || password.isEmpty || isLoading)
+            .disabled((isSignUpMode && name.isEmpty) || email.isEmpty || password.isEmpty || isLoading)
             
-            // Toggle between Sign In and Sign Up
             Button(action: {
                 isSignUpMode.toggle()
                 authManager.errorMessage = ""
@@ -92,9 +95,9 @@ struct AuthenticationView: View {
         
         Task {
             if isSignUpMode {
-                await authManager.signUp(email: email, password: password)
+                await authManager.signUp(email: email, password: password, name: name, firestoreManager: firestoreManager)
             } else {
-                await authManager.signIn(email: email, password: password)
+                await authManager.signIn(email: email, password: password, firestoreManager: firestoreManager)
             }
             
             await MainActor.run {

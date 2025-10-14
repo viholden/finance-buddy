@@ -11,20 +11,26 @@ import FirebaseAuth
 class AuthenticationManager: ObservableObject {
     @Published var user: User?
     @Published var errorMessage: String = ""
+    private var authStateListener: AuthStateDidChangeListenerHandle?
     
     init() {
         self.user = Auth.auth().currentUser
         
-        // Listen for authentication state changes
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.user = user
         }
     }
     
-    // Sign up with email and password
-    func signUp(email: String, password: String) async {
+    deinit {
+        if let listener = authStateListener {
+            Auth.auth().removeStateDidChangeListener(listener)
+        }
+    }
+    
+    func signUp(email: String, password: String, name: String, firestoreManager: FirestoreManager) async {
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
+            try await firestoreManager.createUserProfile(uid: result.user.uid, name: name, email: email)
             await MainActor.run {
                 self.user = result.user
                 self.errorMessage = ""
@@ -36,10 +42,11 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
-    // Sign in with email and password
-    func signIn(email: String, password: String) async {
+    func signIn(email: String, password: String, firestoreManager: FirestoreManager) async {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
+            try await firestoreManager.fetchUserProfile(uid: result.user.uid)
+            try await firestoreManager.updateLastLogin(uid: result.user.uid)
             await MainActor.run {
                 self.user = result.user
                 self.errorMessage = ""
@@ -51,7 +58,6 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
-    // Sign out
     func signOut() {
         do {
             try Auth.auth().signOut()
