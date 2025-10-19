@@ -1,0 +1,41 @@
+
+Documentation Feedback ~ Deliverable #3
+Software Development Plan
+CMSI 4071 Fall 2025
+=======================================
+
+INTRODUCTION/DELIVERABLES SECTION:
+----------------------------------
+Not done for evaluation 2025-10-18
+
+
+PROJECT RESOURCES SECTION:
+----------------------------------
+Not done for evaluation 2025-10-18
+
+
+PROJECT ORGANIZATION SECTION:
+----------------------------------
+Not done for evaluation 2025-10-18
+
+
+PROJECT SCHEDULE SECTION:
+----------------------------------
+Not done for evaluation 2025-10-18
+
+
+OVERALL ASSESSMENT:
+----------------------------------
+   Category                          Points
+   Project Deliverables                0
+   Project Resources                   0
+   Project Organization                0
+   Project Schedule                    0
+                                     =====
+   Subtotal                            0
+   ------------------------------------------------------
+   Total Percentage:   0/5 = 0% which is an F on this deliverable
+
+You still have another shot at this if you want.  Make an SDP and a final
+schedule by the end of the semester and you'll still get partial credit
+for this first submission.
