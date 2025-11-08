@@ -27,10 +27,10 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
-    func signUp(email: String, password: String, name: String, firestoreManager: FirestoreManager) async {
+    func signUp(email: String, password: String, name: String, questionnaireResponse: QuestionnaireResponse? = nil, firestoreManager: FirestoreManager) async {
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
-            try await firestoreManager.createUserProfile(uid: result.user.uid, name: name, email: email)
+            try await firestoreManager.createUserProfile(uid: result.user.uid, name: name, email: email, questionnaireResponse: questionnaireResponse)
             await MainActor.run {
                 self.user = result.user
                 self.errorMessage = ""

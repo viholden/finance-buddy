@@ -7,7 +7,7 @@ class FirestoreManager: ObservableObject {
     @Published var userProfile: UserProfile?
     @Published var isLoading = false
     
-    func createUserProfile(uid: String, name: String, email: String) async throws {
+    func createUserProfile(uid: String, name: String, email: String, questionnaireResponse: QuestionnaireResponse? = nil) async throws {
         let newProfile = UserProfile(
             name: name,
             email: email,
@@ -20,7 +20,8 @@ class FirestoreManager: ObservableObject {
             preferences: UserProfile.Preferences(
                 notifications: true,
                 language: "en"
-            )
+            ),
+            questionnaire: questionnaireResponse
         )
         
         try db.collection("users").document(uid).setData(from: newProfile)
