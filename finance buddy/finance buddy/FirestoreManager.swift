@@ -7,7 +7,7 @@ class FirestoreManager: ObservableObject {
     @Published var userProfile: UserProfile?
     @Published var isLoading = false
     
-    func createUserProfile(uid: String, name: String, email: String, questionnaireResponse: QuestionnaireResponse? = nil) async throws {
+    func createUserProfile(uid: String, name: String, email: String, questionnaireResponses: QuestionnaireResponse? = nil) async throws {
         let newProfile = UserProfile(
             name: name,
             email: email,
@@ -21,7 +21,7 @@ class FirestoreManager: ObservableObject {
                 notifications: true,
                 language: "en"
             ),
-            questionnaire: questionnaireResponse
+            questionnaireResponses: questionnaireResponses
         )
         
         try db.collection("users").document(uid).setData(from: newProfile)
@@ -73,5 +73,18 @@ class FirestoreManager: ObservableObject {
         try await db.collection("users").document(uid).updateData([
             "lastLogin": Timestamp(date: Date())
         ])
+    }
+    
+    func updateQuestionnaireResponses(uid: String, responses: QuestionnaireResponse) async throws {
+        let encoder = Firestore.Encoder()
+        let encodedResponses = try encoder.encode(responses)
+        
+        try await db.collection("users").document(uid).updateData([
+            "questionnaireResponses": encodedResponses
+        ])
+        
+        await MainActor.run {
+            self.userProfile?.questionnaireResponses = responses
+        }
     }
 }

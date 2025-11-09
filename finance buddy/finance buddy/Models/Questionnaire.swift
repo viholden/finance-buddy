@@ -14,6 +14,7 @@ struct QuestionnaireResponse: Codable {
     var riskTolerance: String?
     var savingsExperience: String?
     var primaryConcerns: [String]?
+    var additionalComments: String?
 }
 
 struct Question {
@@ -124,6 +125,14 @@ class QuestionnaireManager {
                 "Limited financial knowledge",
                 "Investment uncertainty"
             ],
+            required: false
+        ),
+        Question(
+            id: "additional_comments",
+            title: "Tell me anything!",
+            description: "Feel free to share anything else you'd like us to know about your financial journey",
+            type: .text,
+            options: nil,
             required: false
         )
     ]

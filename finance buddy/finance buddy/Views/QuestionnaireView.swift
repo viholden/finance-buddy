@@ -166,7 +166,8 @@ struct QuestionnaireView: View {
             expenses: responses["major_expenses"] as? [String],
             riskTolerance: responses["risk_tolerance"] as? String,
             savingsExperience: responses["savings_experience"] as? String,
-            primaryConcerns: responses["primary_concerns"] as? [String]
+            primaryConcerns: responses["primary_concerns"] as? [String],
+            additionalComments: responses["additional_comments"] as? String
         )
     }
 }

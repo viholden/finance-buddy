@@ -11,7 +11,7 @@ struct UserProfile: Codable {
     var createdAt: Date
     var lastLogin: Date
     var preferences: Preferences
-    var questionnaire: QuestionnaireResponse?
+    var questionnaireResponses: QuestionnaireResponse?
     
     struct Preferences: Codable {
         var notifications: Bool
