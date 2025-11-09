@@ -7,6 +7,7 @@ struct ProfileView: View {
     @State private var isEditingName = false
     @State private var editedName = ""
     @State private var isSaving = false
+    @State private var showingEditQuestionnaire = false
     
     var body: some View {
         Form {
@@ -63,6 +64,29 @@ struct ProfileView: View {
                 }
             }
             
+            Section(header: Text("Questionnaire")) {
+                Button(action: { showingEditQuestionnaire = true }) {
+                    HStack {
+                        Image(systemName: "doc.text")
+                        Text("Update Financial Profile")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                if let responses = firestoreManager.userProfile?.questionnaireResponses,
+                   let updatedAt = responses.updatedAt {
+                    HStack {
+                        Text("Last Updated")
+                        Spacer()
+                        Text(updatedAt, style: .date)
+                            .foregroundColor(.secondary)
+                    }
+                    .font(.caption)
+                }
+            }
+            
             Section(header: Text("Preferences")) {
                 Toggle(isOn: Binding(
                     get: { isDarkMode },
@@ -110,6 +134,9 @@ struct ProfileView: View {
         }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingEditQuestionnaire) {
+            EditQuestionnaireView(currentResponse: firestoreManager.userProfile?.questionnaireResponses)
+        }
     }
     
     private func saveName() {

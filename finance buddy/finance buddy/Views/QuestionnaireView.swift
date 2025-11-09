@@ -167,7 +167,8 @@ struct QuestionnaireView: View {
             riskTolerance: responses["risk_tolerance"] as? String,
             savingsExperience: responses["savings_experience"] as? String,
             primaryConcerns: responses["primary_concerns"] as? [String],
-            additionalComments: responses["additional_comments"] as? String
+            additionalComments: responses["additional_comments"] as? String,
+            updatedAt: Date()
         )
     }
 }

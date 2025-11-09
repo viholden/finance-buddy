@@ -76,15 +76,44 @@ class FirestoreManager: ObservableObject {
     }
     
     func updateQuestionnaireResponses(uid: String, responses: QuestionnaireResponse) async throws {
+        var responsesWithTimestamp = responses
+        responsesWithTimestamp.updatedAt = Date()
+        
         let encoder = Firestore.Encoder()
-        let encodedResponses = try encoder.encode(responses)
+        let encodedResponses = try encoder.encode(responsesWithTimestamp)
         
         try await db.collection("users").document(uid).updateData([
             "questionnaireResponses": encodedResponses
         ])
         
+        let historyEntry = QuestionnaireHistoryEntry(
+            financialGoal: responses.financialGoal,
+            incomeRange: responses.incomeRange,
+            expenses: responses.expenses,
+            riskTolerance: responses.riskTolerance,
+            savingsExperience: responses.savingsExperience,
+            primaryConcerns: responses.primaryConcerns,
+            additionalComments: responses.additionalComments,
+            timestamp: Date(),
+            changeNote: "Updated questionnaire responses"
+        )
+        
+        let historyRef = db.collection("users").document(uid).collection("questionnaireHistory").document(historyEntry.id)
+        try historyRef.setData(from: historyEntry)
+        
         await MainActor.run {
-            self.userProfile?.questionnaireResponses = responses
+            self.userProfile?.questionnaireResponses = responsesWithTimestamp
+        }
+    }
+    
+    func fetchQuestionnaireHistory(uid: String) async throws -> [QuestionnaireHistoryEntry] {
+        let snapshot = try await db.collection("users").document(uid)
+            .collection("questionnaireHistory")
+            .order(by: "timestamp", descending: true)
+            .getDocuments()
+        
+        return snapshot.documents.compactMap { doc -> QuestionnaireHistoryEntry? in
+            try? doc.data(as: QuestionnaireHistoryEntry.self)
         }
     }
 }

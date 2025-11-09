@@ -15,6 +15,20 @@ struct QuestionnaireResponse: Codable {
     var savingsExperience: String?
     var primaryConcerns: [String]?
     var additionalComments: String?
+    var updatedAt: Date?
+}
+
+struct QuestionnaireHistoryEntry: Codable, Identifiable {
+    var id: String = UUID().uuidString
+    var financialGoal: String?
+    var incomeRange: String?
+    var expenses: [String]?
+    var riskTolerance: String?
+    var savingsExperience: String?
+    var primaryConcerns: [String]?
+    var additionalComments: String?
+    var timestamp: Date
+    var changeNote: String?
 }
 
 struct Question {
