@@ -239,7 +239,7 @@ struct GoalDetailView: View {
               let amount = Double(newAmount) else { return }
         
         goal.currentAmount += amount
-        goal.progressPercent = (goal.currentAmount / goal.targetAmount) * 100
+        goal.progressPercent = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0
         
         Task {
             try? await goalsManager.updateGoal(uid: uid, goal: goal)

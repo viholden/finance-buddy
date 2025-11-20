@@ -101,8 +101,9 @@ class FirestoreManager: ObservableObject {
         let historyRef = db.collection("users").document(uid).collection("questionnaireHistory").document(historyEntry.id)
         try historyRef.setData(from: historyEntry)
         
+        let updatedResponses = responsesWithTimestamp
         await MainActor.run {
-            self.userProfile?.questionnaireResponses = responsesWithTimestamp
+            self.userProfile?.questionnaireResponses = updatedResponses
         }
     }
     

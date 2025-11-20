@@ -10,128 +10,219 @@ struct ProfileView: View {
     @State private var showingEditQuestionnaire = false
     
     var body: some View {
-        Form {
-            Section(header: Text("Profile")) {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Header Card
                 if let profile = firestoreManager.userProfile {
-                    if isEditingName {
-                        HStack {
-                            TextField("Name", text: $editedName)
-                            Button("Save") {
-                                saveName()
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(LinearGradient(
+                                colors: [Color(red: 0.15, green: 0.65, blue: 0.45), Color(red: 0.25, green: 0.75, blue: 0.55)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                        
+                        VStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.3))
+                                    .frame(width: 100, height: 100)
+                                
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 90, height: 90)
+                                
+                                Text(String(profile.name.prefix(1)).uppercased())
+                                    .font(.system(size: 40, weight: .bold))
+                                    .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
                             }
-                            .disabled(editedName.isEmpty || isSaving)
-                            Button("Cancel") {
-                                isEditingName = false
-                                editedName = profile.name
+                            
+                            VStack(spacing: 4) {
+                                if isEditingName {
+                                    HStack {
+                                        TextField("Name", text: $editedName)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .frame(maxWidth: 200)
+                                        
+                                        Button(action: saveName) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(.white)
+                                        }
+                                        .disabled(editedName.isEmpty || isSaving)
+                                        
+                                        Button(action: {
+                                            isEditingName = false
+                                            editedName = profile.name
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.white.opacity(0.7))
+                                        }
+                                    }
+                                } else {
+                                    HStack(spacing: 8) {
+                                        Text(profile.name)
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                        
+                                        Button(action: {
+                                            editedName = profile.name
+                                            isEditingName = true
+                                        }) {
+                                            Image(systemName: "pencil.circle.fill")
+                                                .foregroundColor(.white.opacity(0.9))
+                                        }
+                                    }
+                                }
+                                
+                                Text(profile.email)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.9))
                             }
-                            .foregroundColor(.red)
+                            
+                            HStack(spacing: 20) {
+                                VStack(spacing: 4) {
+                                    Text("\(profile.totalPoints)")
+                                        .font(.title)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                    Text("Points")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(12)
+                                
+                                VStack(spacing: 4) {
+                                    Text(profile.currency)
+                                        .font(.title)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                    Text("Currency")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(12)
+                            }
                         }
-                    } else {
-                        HStack {
-                            Text("Name")
+                        .padding(24)
+                    }
+                    .frame(height: 300)
+                    .padding(.horizontal)
+                }
+                
+                // Financial Profile Section
+                VStack(spacing: 16) {
+                    HStack {
+                        Image(systemName: "doc.text.fill")
+                            .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
+                        Text("Financial Profile")
+                            .font(.headline)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    
+                    Button(action: { showingEditQuestionnaire = true }) {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(red: 0.2, green: 0.7, blue: 0.5).opacity(0.2))
+                                    .frame(width: 50, height: 50)
+                                
+                                Image(systemName: "square.and.pencil")
+                                    .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Update Financial Profile")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                if let responses = firestoreManager.userProfile?.questionnaireResponses,
+                                   let updatedAt = responses.updatedAt {
+                                    Text("Last updated: \(formatDate(updatedAt))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
                             Spacer()
-                            Text(profile.name)
-                                .foregroundColor(.secondary)
-                            Button(action: {
-                                editedName = profile.name
-                                isEditingName = true
-                            }) {
-                                Image(systemName: "pencil")
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    }
+                    .padding(.horizontal)
+                }
+                
+                // Settings Section
+                VStack(spacing: 16) {
+                    HStack {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
+                        Text("Settings")
+                            .font(.headline)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    
+                    VStack(spacing: 12) {
+                        Toggle(isOn: $isDarkMode) {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(red: 0.2, green: 0.7, blue: 0.5).opacity(0.2))
+                                        .frame(width: 40, height: 40)
+                                    
+                                    Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
+                                        .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
+                                }
+                                
+                                Text("Dark Mode")
+                                    .font(.subheadline)
                             }
                         }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                     }
-                    
-                    HStack {
-                        Text("Email")
-                        Spacer()
-                        Text(profile.email)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Total Points")
-                        Spacer()
-                        Text("\(profile.totalPoints)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Currency")
-                        Spacer()
-                        Text(profile.currency)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            
-            Section(header: Text("Questionnaire")) {
-                Button(action: { showingEditQuestionnaire = true }) {
-                    HStack {
-                        Image(systemName: "doc.text")
-                        Text("Update Financial Profile")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
+                    .padding(.horizontal)
                 }
                 
-                if let responses = firestoreManager.userProfile?.questionnaireResponses,
-                   let updatedAt = responses.updatedAt {
-                    HStack {
-                        Text("Last Updated")
-                        Spacer()
-                        Text(updatedAt, style: .date)
-                            .foregroundColor(.secondary)
-                    }
-                    .font(.caption)
-                }
-            }
-            
-            Section(header: Text("Preferences")) {
-                Toggle(isOn: Binding(
-                    get: { isDarkMode },
-                    set: { newValue in
-                        isDarkMode = newValue
-                        toggleDarkMode(newValue)
-                    }
-                )) {
-                    HStack {
-                        Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
-                        Text("Dark Mode")
-                    }
-                }
-            }
-            
-            Section(header: Text("Account")) {
-                if let profile = firestoreManager.userProfile {
-                    HStack {
-                        Text("Member Since")
-                        Spacer()
-                        Text(profile.createdAt, style: .date)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Last Login")
-                        Spacer()
-                        Text(profile.lastLogin, style: .date)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
+                // Sign Out Button
                 Button(action: {
                     authManager.signOut()
-                    firestoreManager.userProfile = nil
                 }) {
                     HStack {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
                         Text("Sign Out")
-                        Spacer()
-                        Image(systemName: "arrow.right.square")
+                            .fontWeight(.semibold)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
                     .foregroundColor(.red)
+                    .background(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15)
+                            .stroke(Color.red, lineWidth: 2)
+                    )
                 }
+                .padding(.horizontal)
+                .padding(.top, 8)
             }
+            .padding(.vertical)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingEditQuestionnaire) {
@@ -158,12 +249,10 @@ struct ProfileView: View {
         }
     }
     
-    private func toggleDarkMode(_ enabled: Bool) {
-        guard let uid = authManager.user?.uid else { return }
-        
-        Task {
-            try? await firestoreManager.updateDarkMode(uid: uid, darkMode: enabled)
-        }
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
     }
 }
 

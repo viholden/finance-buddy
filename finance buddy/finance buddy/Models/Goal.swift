@@ -1,6 +1,6 @@
 import Foundation
 
-struct Goal: Codable, Identifiable {
+struct Goal: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var name: String
     var targetAmount: Double

@@ -13,6 +13,10 @@ class AuthenticationManager: ObservableObject {
     @Published var errorMessage: String = ""
     private var authStateListener: AuthStateDidChangeListenerHandle?
     
+    var userId: String? {
+        user?.uid
+    }
+    
     init() {
         self.user = Auth.auth().currentUser
         

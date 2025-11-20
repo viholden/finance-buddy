@@ -16,37 +16,38 @@ struct ContentView: View {
         TabView {
             DashboardView()
                 .tabItem {
-                    Label("Dashboard", systemImage: "house.fill")
+                    Label("Home", systemImage: "house.fill")
                 }
             
             NavigationView {
-                GoalsView()
+                AIAdvisorChatView()
+            }
+            .tabItem {
+                Label("AI Advisor", systemImage: "message.fill")
+            }
+            
+            NavigationView {
+                EnhancedGoalsView()
             }
             .tabItem {
                 Label("Goals", systemImage: "target")
             }
             
             NavigationView {
-                ExpensesView()
+                EnhancedExpensesView()
             }
             .tabItem {
                 Label("Expenses", systemImage: "creditcard.fill")
             }
             
             NavigationView {
-                LessonsView()
+                EnhancedLessonsView()
             }
             .tabItem {
                 Label("Learn", systemImage: "book.fill")
             }
-            
-            NavigationView {
-                ChallengesView()
-            }
-            .tabItem {
-                Label("Challenges", systemImage: "trophy.fill")
-            }
         }
+        .accentColor(Color(red: 0.2, green: 0.7, blue: 0.5))
         .environmentObject(notificationsManager)
         .task {
             if let uid = authManager.user?.uid {
@@ -60,91 +61,206 @@ struct DashboardView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @EnvironmentObject var firestoreManager: FirestoreManager
     @EnvironmentObject var notificationsManager: NotificationsManager
+    @StateObject private var expensesManager = ExpensesManager()
+    @StateObject private var goalsManager = GoalsManager()
     @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var showingProfile = false
     @State private var showingNotifications = false
     
+    var totalExpenses: Double {
+        expensesManager.expenses.reduce(0) { $0 + $1.amount }
+    }
+    
+    var totalIncome: Double {
+        // Calculate from questionnaire income range or use 0
+        guard let incomeRange = firestoreManager.userProfile?.questionnaireResponses?.incomeRange else { return 0 }
+        // Parse income range (e.g., "$50,000 - $75,000")
+        if incomeRange.contains("-") {
+            let parts = incomeRange.components(separatedBy: "-")
+            if let firstPart = parts.first?.trimmingCharacters(in: .whitespaces) {
+                let numericString = firstPart.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: ",", with: "")
+                return Double(numericString) ?? 0
+            }
+        }
+        return 0
+    }
+    
+    var totalBalance: Double {
+        totalIncome - totalExpenses
+    }
+    
+    var recentExpenses: [Expense] {
+        Array(expensesManager.expenses.sorted { $0.date > $1.date }.prefix(4))
+    }
+    
+    var recentGoals: [Goal] {
+        let sortedGoals = goalsManager.goals.sorted { goal1, goal2 in
+            let progress1 = goal1.targetAmount > 0 ? goal1.currentAmount / goal1.targetAmount : 0
+            let progress2 = goal2.targetAmount > 0 ? goal2.currentAmount / goal2.targetAmount : 0
+            return progress1 > progress2
+        }
+        return Array(sortedGoals.prefix(3))
+    }
+    
+    func categoryIcon(for category: String) -> String {
+        switch category.lowercased() {
+        case "food", "groceries": return "cart.fill"
+        case "coffee": return "cup.and.saucer.fill"
+        case "dining", "restaurant": return "fork.knife"
+        case "transport", "transportation": return "car.fill"
+        case "bills", "utilities": return "bolt.fill"
+        case "entertainment": return "tv.fill"
+        case "shopping": return "bag.fill"
+        default: return "dollarsign.circle.fill"
+        }
+    }
+    
+    var headerView: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Good Morning,")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text(firestoreManager.userProfile?.name ?? "User")
+                    .font(.title)
+                    .fontWeight(.bold)
+            }
+            
+            Spacer()
+            
+            Button(action: { showingProfile = true }) {
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
+            }
+        }
+        .padding(.horizontal)
+    }
+    
+    var balanceCardView: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(LinearGradient(
+                    colors: [Color(red: 0.15, green: 0.65, blue: 0.45), Color(red: 0.25, green: 0.75, blue: 0.55)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+            
+            VStack(spacing: 16) {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Total Balance")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                        Text("$\(totalBalance, specifier: "%.2f")")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    Spacer()
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 50))
+                        .foregroundColor(.white.opacity(0.3))
+                }
+                
+                HStack(spacing: 16) {
+                    BalanceCard(title: "Income", amount: String(format: "$%.2f", totalIncome), icon: "arrow.down.circle.fill", color: .white.opacity(0.9))
+                    BalanceCard(title: "Expenses", amount: String(format: "$%.2f", totalExpenses), icon: "arrow.up.circle.fill", color: .white.opacity(0.9))
+                }
+            }
+            .padding(24)
+        }
+        .frame(height: 200)
+        .padding(.horizontal)
+    }
+    
+    var quickActionsView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Actions")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    QuickActionCard(icon: "plus.circle.fill", title: "Add Expense", color: Color(red: 0.3, green: 0.8, blue: 0.6))
+                    QuickActionCard(icon: "target", title: "New Goal", color: Color(red: 0.2, green: 0.7, blue: 0.5))
+                    QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "View Stats", color: Color(red: 0.4, green: 0.85, blue: 0.65))
+                    QuickActionCard(icon: "message.fill", title: "Ask AI", color: Color(red: 0.25, green: 0.75, blue: 0.55))
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    var recentActivityView: some View {
+        if !recentExpenses.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Recent Activity")
+                    .font(.headline)
+                    .padding(.horizontal)
+                
+                VStack(spacing: 12) {
+                    ForEach(recentExpenses) { expense in
+                        ActivityCard(
+                            icon: categoryIcon(for: expense.category),
+                            title: expense.merchant.isEmpty ? expense.description : expense.merchant,
+                            category: expense.category,
+                            amount: String(format: "-$%.2f", expense.amount),
+                            color: Color(red: 0.2, green: 0.7, blue: 0.5),
+                            isPositive: false
+                        )
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    var savingsGoalsView: some View {
+        if !recentGoals.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Savings Goals")
+                    .font(.headline)
+                    .padding(.horizontal)
+                
+                VStack(spacing: 12) {
+                    ForEach(recentGoals) { goal in
+                        GoalProgressCard(
+                            title: goal.name,
+                            current: goal.currentAmount,
+                            target: goal.targetAmount,
+                            color: Color(red: 0.2, green: 0.7, blue: 0.5)
+                        )
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
-                    if let profile = firestoreManager.userProfile {
-                        VStack(spacing: 16) {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text("Welcome back,")
-                                        .foregroundColor(.secondary)
-                                    Text(profile.name)
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                }
-                                
-                                Spacer()
-                                
-                                Button(action: { showingProfile = true }) {
-                                    Image(systemName: "person.circle.fill")
-                                        .font(.system(size: 40))
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                            
-                            HStack(spacing: 20) {
-                                VStack {
-                                    HStack {
-                                        Image(systemName: "star.fill")
-                                            .foregroundColor(.yellow)
-                                        Text("\(profile.totalPoints)")
-                                            .font(.title2)
-                                            .fontWeight(.bold)
-                                    }
-                                    Text("Total Points")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(12)
-                                
-                                VStack {
-                                    HStack {
-                                        Image(systemName: "dollarsign.circle.fill")
-                                            .foregroundColor(.green)
-                                        Text(profile.currency)
-                                            .font(.title2)
-                                            .fontWeight(.bold)
-                                    }
-                                    Text("Currency")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(12)
-                            }
-                        }
-                        .padding()
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(16)
-                    } else if firestoreManager.isLoading {
-                        ProgressView()
-                            .padding()
-                    }
-                    
-                    QuickActionsView()
-                    
-                    RecentActivityView()
+                VStack(spacing: 24) {
+                    headerView
+                    balanceCardView
+                    quickActionsView
+                    recentActivityView
+                    savingsGoalsView
                 }
-                .padding()
+                .padding(.vertical)
             }
-            .navigationTitle("Finance Buddy")
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingNotifications = true }) {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "bell.fill")
                                 .font(.title3)
+                                .foregroundColor(Color(red: 0.2, green: 0.7, blue: 0.5))
                             
                             if notificationsManager.unreadCount > 0 {
                                 Circle()
@@ -166,92 +282,164 @@ struct DashboardView: View {
                     NotificationsView()
                 }
             }
-        }
-    }
-}
-
-struct QuickActionsView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Actions")
-                .font(.headline)
-            
-            HStack(spacing: 12) {
-                NavigationLink(destination: GoalsView()) {
-                    QuickActionButton(icon: "target", title: "Goals", color: .blue)
-                }
-                
-                NavigationLink(destination: ExpensesView()) {
-                    QuickActionButton(icon: "creditcard", title: "Expenses", color: .red)
-                }
-                
-                NavigationLink(destination: LessonsView()) {
-                    QuickActionButton(icon: "book", title: "Learn", color: .green)
-                }
-                
-                NavigationLink(destination: ChallengesView()) {
-                    QuickActionButton(icon: "trophy", title: "Challenge", color: .orange)
+            .task {
+                if let userId = authManager.userId {
+                    try? await expensesManager.fetchExpenses(uid: userId)
+                    try? await goalsManager.fetchGoals(uid: userId)
                 }
             }
         }
     }
 }
 
-struct QuickActionButton: View {
-    let icon: String
+struct BalanceCard: View {
     let title: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.primary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
-    }
-}
-
-struct RecentActivityView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-            
-            VStack(spacing: 8) {
-                ActivityRow(icon: "checkmark.circle.fill", text: "Completed Budget Basics", color: .green)
-                ActivityRow(icon: "plus.circle.fill", text: "Added new expense: Coffee", color: .blue)
-                ActivityRow(icon: "target", text: "Updated goal: Save for laptop", color: .orange)
-            }
-            .padding()
-            .background(Color.secondary.opacity(0.1))
-            .cornerRadius(12)
-        }
-    }
-}
-
-struct ActivityRow: View {
+    let amount: String
     let icon: String
-    let text: String
     let color: Color
     
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(color)
-            Text(text)
-                .font(.subheadline)
-            Spacer()
-            Text("Today")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading) {
+                Text(title)
+                    .font(.caption)
+                Text(amount)
+                    .font(.headline)
+            }
         }
+        .foregroundColor(color)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.white.opacity(0.2))
+        .cornerRadius(12)
+    }
+}
+
+struct QuickActionCard: View {
+    let icon: String
+    let title: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 28))
+                    .foregroundColor(color)
+            }
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.primary)
+        }
+        .frame(width: 100)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+}
+
+struct ActivityCard: View {
+    let icon: String
+    let title: String
+    let category: String
+    let amount: String
+    let color: Color
+    let isPositive: Bool
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 50, height: 50)
+                
+                Image(systemName: icon)
+                    .foregroundColor(color)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(category)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Text(amount)
+                .font(.headline)
+                .foregroundColor(isPositive ? Color(red: 0.2, green: 0.7, blue: 0.5) : .primary)
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+}
+
+struct GoalProgressCard: View {
+    let title: String
+    let current: Double
+    let target: Double
+    let color: Color
+    
+    var progress: Double {
+        guard target > 0 else { return 0 }
+        return min(current / target, 1.0)
+    }
+    
+    var progressPercentage: Int {
+        Int((progress * 100).rounded())
+    }
+    
+    var progressWidth: CGFloat {
+        let maxWidth = UIScreen.main.bounds.width - 64
+        return max(0, min(CGFloat(progress) * maxWidth, maxWidth))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Text("\(progressPercentage)%")
+                    .font(.subheadline)
+                    .foregroundColor(color)
+            }
+            
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(color.opacity(0.2))
+                    .frame(height: 8)
+                
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(color)
+                    .frame(width: progressWidth, height: 8)
+            }
+            
+            HStack {
+                Text("$\(current.isFinite ? Int(current) : 0)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("$\(target.isFinite ? Int(target) : 0)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 

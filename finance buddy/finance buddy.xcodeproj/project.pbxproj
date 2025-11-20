@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F7471ED62E94A6E1009BE7B3 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = F7471ED52E94A6E1009BE7B3 /* Config.plist */; };
 		F7471ED82E94A6E2009BE7B3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F7471ED72E94A6E2009BE7B3 /* GoogleService-Info.plist */; };
 		F7471EDF2E94A91D009BE7B3 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = F7471EDE2E94A91D009BE7B3 /* FirebaseAI */; };
 		F7471EE12E94A91D009BE7B3 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F7471EE02E94A91D009BE7B3 /* FirebaseAnalytics */; };
@@ -42,6 +43,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F7471ED52E94A6E1009BE7B3 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 		F7471ED72E94A6E2009BE7B3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		F7F37A4D2E8E0DF800289B03 /* finance buddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "finance buddy.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7F37A5D2E8E0DFA00289B03 /* finance buddyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "finance buddyTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -108,6 +110,7 @@
 		F7F37A442E8E0DF800289B03 = {
 			isa = PBXGroup;
 			children = (
+				F7471ED52E94A6E1009BE7B3 /* Config.plist */,
 				F7471ED72E94A6E2009BE7B3 /* GoogleService-Info.plist */,
 				F7F37A4F2E8E0DF800289B03 /* finance buddy */,
 				F7F37A602E8E0DFA00289B03 /* finance buddyTests */,
@@ -263,6 +266,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F7471ED62E94A6E1009BE7B3 /* Config.plist in Resources */,
 				F7471ED82E94A6E2009BE7B3 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
