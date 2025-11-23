@@ -1,0 +1,116 @@
+
+Documentation Feedback ~ Deliverable #4
+Software Design Document ~ Detailed Design
+CMSI 4071 Fall 2025
+==========================================
+
+DETAILED CSC AND CSU DESCRIPTIONS:
+   Strengths:
+      Clearly identifies major CSCs (Authentication, Dashboard, Goal
+         Manager, AI Categorization, Gamification, Notification System,
+         Admin Dashboard, Reporting Service)
+      Each CSC includes CSUs with descriptive names and responsibilities
+         (e.g., AuthService, DashboardViewModel, GoalRepository,
+         RAGRequestFormatter)
+      Provides functional requirement mapping for traceability
+   Suggestions:
+      Missing design rationale for CSC decomposition
+         (why these CSCs were chosen)
+      Should include dependency relationships between CSUs
+         (e.g., DashboardViewModel depends on ExpenseRepository)
+      Add error handling strategies or resilience notes for critical
+         CSUs (e.g., AI categorization failures)
+      Consider specifying data flow direction and interaction patterns
+         between CSUs
+
+
+DETAILED CLASS DESCRIPTIONS:
+   Strengths:
+      Each class includes fields and methods with clear naming conventions
+      Covers all major functional areas: authentication, dashboard, goals,
+         AI categorization, gamification, notifications, admin, reporting
+      Good alignment with SwiftUI and Firebase architecture
+   Suggestions:
+      Add data types consistently for all fields and method parameters
+         (some are implied but not explicit)
+      Include method signatures with parameter types and return types
+         for clarity
+      Provide error handling or exception notes for critical methods
+         (e.g., signIn, categorize)
+      Consider adding relationships between classes
+         (e.g., DashboardViewModel interacts with ExpenseRepository)
+
+
+DETAILED INTERFACE DESCRIPTIONS:
+   Strengths:
+      Interfaces are well-structured with purpose and responsibilities
+      Covers all major interactions (Authentication, Dashboard,
+         Goal Management, AI Categorization, Gamification, Notifications,
+         Admin, Reporting)
+      Mentions real-time updates for dashboard and notifications
+   Suggestions:
+      Include protocol details (e.g., HTTPS, JSON payload format, WebSocket
+         for real-time)
+      Add security considerations for sensitive data exchange
+         (e.g., encryption for AI categorization requests)
+      Specify error handling and retry logic for failed interactions
+      Consider adding performance constraints
+         (e.g., latency for AI categorization)
+
+
+DETAILED DATA STRUCTURE DESCRIPTIONS:
+   Strengths:
+      Provides purpose, fields, and operations for each CSC’s data
+         structures
+      Uses consistent naming conventions and aligns with Firestore schema
+      Includes JSON payload formats for AI categorization and notifications
+   Suggestions:
+      Add data types explicitly for all fields
+         (some are implied but not stated)
+      Include constraints (e.g., required fields, uniqueness)
+      Document validation rules (e.g., category must match predefined set)
+      Consider adding example JSON payloads for API interactions
+
+
+DETAILED DESIGN DIAGRAMS:
+   Strengths:
+      Includes use case diagram, package diagram, class diagram,
+         and state diagram
+      Diagrams show multiple perspectives (structural and behavioral)
+   Suggestions:
+      Ensure diagrams are fully labeled
+         (some appear incomplete or lack legends)
+      Add sequence diagrams for critical workflows
+         (e.g., expense categorization, goal reminder scheduling)
+      Include consistency checks between diagrams and textual descriptions
+      Provide legends and stereotypes for clarity (e.g., <>, <>)
+
+
+DATABASE DESIGN AND DESCRIPTION:
+   Not Applicable
+
+
+----------------------------------------------
+OVERALL ASSESSMENT:
+   Category                          Points
+   CSC/CSU Descriptions:                2 of  2
+   Class Descriptions:                  3 of  3
+   Interface Descriptions:              3 of  3
+   Data structure Descriptions:         1 of  1
+   Design diagrams:                     4 of  4
+   Database design/descriptions:        2 of  2
+                                     ===========
+   Subtotal                            15 of 15
+   ------------------------------------------------------
+   Total Percentage:  15/15 = 100% which is an A-plus
+
+
+Overall Completeness Assessment
+   Strengths: Excellent coverage of CSC/CSU, class details, interfaces,
+               and data structures; strong traceability to requirements.
+   Gaps: Missing detailed rationale, explicit data types, error handling,
+         and fully annotated diagrams.
+   Agile vs Waterfall Fit: Document supports Agile modular design but
+      could adapt to waterfall by adding phase-based design rationale
+      and review checkpoints.
+

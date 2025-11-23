@@ -1,0 +1,104 @@
+
+Documentation Feedback ~ Deliverable #4
+Software Design Document ~ Architecture
+CMSI 4071 Fall 2025
+=======================================
+
+INTRODUCTION SECTION:
+   System objectives section
+      Strengths:
+         States the architecture follows a modular MVC pattern integrated
+            with Firebase, which is appropriate for scalability and
+            separation of concerns
+         Mentions cross-platform extensibility, showing foresight for
+            future development
+         Includes a high-level architecture diagram (though details are
+            unclear from the text)
+      Suggestions:
+         The description is brief; should explicitly outline layers
+            (Presentation, Business Logic, Data) and their responsibilities
+         Include design rationale for choosing MVC and Firebase
+            (e.g., why MVC over MVVM for SwiftUI?)
+         Add non-functional considerations (performance, security,
+            maintainability) tied to architecture
+         Ensure the diagram is fully labeled with components, data flows,
+            and external services
+
+   Hardware, software, and human interfaces section
+      included in above section
+
+ARCHITECTURAL DESIGN SECTION:
+   Major softwre components section
+      Strengths:
+         Provides a clear table listing components, descriptions,
+            and related functional requirements
+         Covers all major modules: Authentication, Dashboard, Goal Manager,
+            AI Engine, Gamification, Notifications, Admin Dashboard, Reporting
+         Links components to functional requirements, which is excellent
+            for traceability
+      Suggestions:
+         Missing interfaces between components (e.g., how Dashboard interacts
+            with AI Engine)
+         Should include responsibility statements and design constraints for
+            each component
+         Add technology choices for each module (e.g., SwiftUI for Dashboard,
+            Firebase Cloud Functions for AI integration)
+         Consider specifying data flow direction and dependencies between
+            components
+
+   Major software interactions section
+      Strengths:
+         Lists key interactions (Frontend <-> Firebase, Backend <-> AI Service,
+            Notification Service, Admin Panel)
+         Mentions security measures (HTTPS, authentication tokens)
+         Includes real-time synchronization via Firestore listeners
+      Suggestions:
+         Interaction descriptions are high-level; should include protocol
+            details (e.g., REST vs WebSocket for real-time updates)
+         Add error handling strategies for failed AI categorization or
+            notification delivery
+         Include sequence of operations for critical workflows
+            (e.g., expense categorization flow)
+         Consider performance constraints (e.g., latency for AI categorization)
+
+
+   Architectural design diagrams section
+      Strengths:
+         Lists key interactions (Frontend <-> Firebase, Backend <-> AI Service,
+            Notification Service, Admin Panel)
+         Mentions security measures (HTTPS, authentication tokens)
+         Includes real-time synchronization via Firestore listeners
+      Suggestions:
+         Interaction descriptions are high-level; should include protocol
+            details (e.g., REST vs WebSocket for real-time updates)
+         Add error handling strategies for failed AI categorization or
+            notification delivery
+         Include sequence of operations for critical workflows
+            (e.g., expense categorization flow)
+         Consider performance constraints (e.g., latency for AI categorization)
+
+OVERALL ASSESSMENT:
+   Category                          Points
+   INTRODUCTION                         1
+   System objectives                    1
+   H/W, S/W, Human I/F                  1
+
+   ARCHITECTURAL DESIGN SECTION:
+   Major softwre components             1
+   Major software interactions          1
+   Architectural design diagrams        5
+
+                                     ======
+   Subtotal                            10
+   ------------------------------------------------------
+   Total Percentage:  10/10 = 100% which is an A-plus
+
+
+Overall Completeness Assessment
+   Strengths: Good coverage of components, interactions, and diagrams;
+               strong traceability to requirements
+   Gaps: Missing detailed rationale, interface specifications,
+            error handling, and fully annotated diagrams
+   Agile vs Waterfall Fit: Document leans toward Agile-friendly modular
+      design, but could easily adapt to waterfall by adding phase-based
+      design rationale and review checkpoints

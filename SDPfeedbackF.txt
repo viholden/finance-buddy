@@ -6,36 +6,73 @@ CMSI 4071 Fall 2025
 
 INTRODUCTION/DELIVERABLES SECTION:
 ----------------------------------
-Not done for evaluation 2025-10-18
+   Not applicable
 
 
 PROJECT RESOURCES SECTION:
 ----------------------------------
-Not done for evaluation 2025-10-18
-
+Strengths:
+   Lists hardware resources (MacBook Air, iPhone, Cloud Firestore)
+   Lists software resources (Xcode, Firebase, GitHub, Figma, Python,
+      Notion)
+   Includes task/resource table mapping tasks to developers
+      and tools
+Suggestions:
+   Missing human resource allocation summary
+      (e.g., % time per team member)
+   No budget or cost estimates for hardware/software licenses
+   Should include contingency resources
+      (e.g., backup devices or cloud credits)
 
 PROJECT ORGANIZATION SECTION:
 ----------------------------------
-Not done for evaluation 2025-10-18
+Strengths:
+   Includes a team member table with roles and responsibilities (Project
+      Manager, UI/UX Designer, Backend Developer)
+   Responsibilities are clearly linked to technical tasks (e.g.,
+      Firebase integration, UI design)
+Suggestions:
+   Missing organizational chart or diagram showing reporting structure.
+   No mention of communication plan (how team members coordinate,
+      meeting cadence).
+   Should clarify decision-making hierarchy and escalation paths.
 
 
 PROJECT SCHEDULE SECTION:
 ----------------------------------
-Not done for evaluation 2025-10-18
+Strengths:
+   Provides a detailed Gantt-like table with tasks mapped to weeks.
+   Identifies critical path (Firebase Setup -> Expense Tracker -> AI
+      Categorization -> Testing -> Final Demo)
+   Includes milestones (SRS, SDP, Prototype Test, Beta Testing,
+      Final Presentation)
+Suggestions:
+   No dependency diagram or PERT chart to visualize task relationships
+   Lacks buffer time for risk mitigation or unexpected delays
+   Should include deliverable acceptance checkpoints
+   (e.g., sign-off after SRS completion)
 
 
 OVERALL ASSESSMENT:
 ----------------------------------
    Category                          Points
-   Project Deliverables                0
-   Project Resources                   0
-   Project Organization                0
-   Project Schedule                    0
+   Project Deliverables                1
+   Project Resources                   1
+   Project Organization                2
+   Project Schedule                    1
                                      =====
-   Subtotal                            0
+   Subtotal                            5
    ------------------------------------------------------
-   Total Percentage:   0/5 = 0% which is an F on this deliverable
+   Total Percentage:   5/5 = 100% which is an A-plus on this deliverable
 
-You still have another shot at this if you want.  Make an SDP and a final
-schedule by the end of the semester and you'll still get partial credit
-for this first submission.
+2025-10-18: You still have another shot at this if you want.  Make an SDP
+   and a final schedule by the end of the semester and you'll still get
+   partial credit for this first submission.
+
+2025-11-22:
+Overall Completeness Assessment
+   Strong on resources and schedule visualization
+   Weak on formal waterfall structure, risk management, quality assurance,
+      and review processes
+   Agile references make it inconsistent with waterfall expectations but
+      that is OK since it's an Agile project
