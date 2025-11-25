@@ -112,10 +112,22 @@ struct AIAdvisorChatView: View {
     var quickSuggestions: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                SuggestionChip(text: "Budget help", icon: "chart.pie.fill")
-                SuggestionChip(text: "Investment tips", icon: "chart.line.uptrend.xyaxis")
-                SuggestionChip(text: "Save money", icon: "banknote.fill")
-                SuggestionChip(text: "Reduce debt", icon: "creditcard.fill")
+                SuggestionChip(text: "Budget help", icon: "chart.pie.fill") {
+                    newMessage = "How do I create a budget?"
+                    sendMessage()
+                }
+                SuggestionChip(text: "Investment tips", icon: "chart.line.uptrend.xyaxis") {
+                    newMessage = "How do I start investing?"
+                    sendMessage()
+                }
+                SuggestionChip(text: "Save money", icon: "banknote.fill") {
+                    newMessage = "How can I save more money?"
+                    sendMessage()
+                }
+                SuggestionChip(text: "Reduce debt", icon: "creditcard.fill") {
+                    newMessage = "How do I pay off my debt?"
+                    sendMessage()
+                }
             }
             .padding(.horizontal)
         }
@@ -180,23 +192,44 @@ struct AIAdvisorChatView: View {
         .alert("Clear Chat History?", isPresented: $showingClearConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Clear", role: .destructive) {
-                aiManager.clearHistory()
+                Task {
+                    await aiManager.clearHistory()
+                }
             }
         } message: {
-            Text("This will delete all messages in this conversation.")
+            Text("This will permanently delete all messages in this conversation.")
+        }
+        .onAppear {
+            // Refresh context every time they come back to AI Advisor
+            Task {
+                if let uid = authManager.user?.uid {
+                    try? await expensesManager.fetchExpenses(uid: uid)
+                    try? await goalsManager.fetchGoals(uid: uid)
+                    
+                    // Update AI with FRESH user context
+                    aiManager.updateUserContext(
+                        profile: firestoreManager.userProfile,
+                        expenses: expensesManager.expenses,
+                        goals: goalsManager.goals,
+                        questionnaire: firestoreManager.userProfile?.questionnaireResponses,
+                        uid: uid
+                    )
+                }
+            }
         }
         .task {
-            // Load user data for AI context
+            // Initial load when view first appears
             if let uid = authManager.user?.uid {
                 try? await expensesManager.fetchExpenses(uid: uid)
                 try? await goalsManager.fetchGoals(uid: uid)
                 
-                // Update AI with user context
+                // Update AI with user context and load chat history
                 aiManager.updateUserContext(
                     profile: firestoreManager.userProfile,
                     expenses: expensesManager.expenses,
                     goals: goalsManager.goals,
-                    questionnaire: firestoreManager.userProfile?.questionnaireResponses
+                    questionnaire: firestoreManager.userProfile?.questionnaireResponses,
+                    uid: uid
                 )
             }
         }
@@ -206,7 +239,8 @@ struct AIAdvisorChatView: View {
                 profile: firestoreManager.userProfile,
                 expenses: newValue,
                 goals: goalsManager.goals,
-                questionnaire: firestoreManager.userProfile?.questionnaireResponses
+                questionnaire: firestoreManager.userProfile?.questionnaireResponses,
+                uid: authManager.user?.uid
             )
         }
         .onChange(of: goalsManager.goals) { oldValue, newValue in
@@ -215,7 +249,8 @@ struct AIAdvisorChatView: View {
                 profile: firestoreManager.userProfile,
                 expenses: expensesManager.expenses,
                 goals: newValue,
-                questionnaire: firestoreManager.userProfile?.questionnaireResponses
+                questionnaire: firestoreManager.userProfile?.questionnaireResponses,
+                uid: authManager.user?.uid
             )
         }
     }
@@ -296,18 +331,21 @@ struct TypingIndicator: View {
 struct SuggestionChip: View {
     let text: String
     let icon: String
+    let action: () -> Void
     
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.caption)
-            Text(text)
-                .font(.subheadline)
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(text)
+                    .font(.subheadline)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color(red: 0.2, green: 0.7, blue: 0.5).opacity(0.15))
+            .foregroundColor(Color(red: 0.15, green: 0.6, blue: 0.4))
+            .cornerRadius(16)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color(red: 0.2, green: 0.7, blue: 0.5).opacity(0.15))
-        .foregroundColor(Color(red: 0.15, green: 0.6, blue: 0.4))
-        .cornerRadius(16)
     }
 }
