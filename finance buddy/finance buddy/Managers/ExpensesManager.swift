@@ -1,15 +1,29 @@
 import Foundation
+import UIKit
+import FirebaseCore
 import FirebaseFirestore
 import FirebaseAuth
 
 class ExpensesManager: ObservableObject {
-    private let db = Firestore.firestore()
+    private var db: Firestore?
     @Published var expenses: [Expense] = []
     @Published var isLoading = false
+
+    init() {
+        if FirebaseApp.app() != nil { self.db = Firestore.firestore() }
+        else { NotificationCenter.default.addObserver(self, selector: #selector(setupFirestoreIfNeeded), name: UIApplication.didFinishLaunchingNotification, object: nil) }
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func setupFirestoreIfNeeded() { if FirebaseApp.app() != nil { self.db = Firestore.firestore(); NotificationCenter.default.removeObserver(self) } }
+
+    private func requireDB() throws -> Firestore { if let db = self.db { return db }; throw NSError(domain: "ExpensesManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Firebase is not configured."]) }
     
     func fetchExpenses(uid: String) async throws {
         await MainActor.run { self.isLoading = true }
         
+        let db = try requireDB()
         let snapshot = try await db.collection("users").document(uid).collection("expenses")
             .order(by: "date", descending: true)
             .getDocuments()
@@ -25,6 +39,7 @@ class ExpensesManager: ObservableObject {
     }
     
     func addExpense(uid: String, expense: Expense) async throws {
+        let db = try requireDB()
         let docRef = db.collection("users").document(uid).collection("expenses").document(expense.id)
         try docRef.setData(from: expense)
         
@@ -34,6 +49,7 @@ class ExpensesManager: ObservableObject {
     }
     
     func deleteExpense(uid: String, expenseId: String) async throws {
+        let db = try requireDB()
         try await db.collection("users").document(uid).collection("expenses").document(expenseId).delete()
         
         await MainActor.run {

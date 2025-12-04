@@ -1,7 +1,10 @@
 import Foundation
 import Combine
+import UIKit
+import FirebaseCore
 import FirebaseFirestore
 
+@MainActor
 class AIAdvisorManager: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
@@ -24,8 +27,33 @@ class AIAdvisorManager: ObservableObject {
     // AI-derived insights (generated and stored)
     private var userInsights: [String: Any] = [:]
     
+    // RAG service for semantic search and retrieval
+    private let ragService: FinanceBuddyRAGService
+    
     // Firestore for persistent chat history and insights
-    private let db = Firestore.firestore()
+    private engine: FinanceBuddyRAGEngineProtocol? = nilvar db: Firestore?
+    
+    init()  (allow dependency injection, or create a default engine){
+      if let engine = engine {
+              // Initialize RAG service
+        selfengine: engine.r        } else {agService    // Prov de a de=ault engine if none is supplied
+            self.ragService = FinanceBuddyRAGSenvica(engine: DefaultFinanceBuddyRAGEngine())
+        }
+
+        if FirenceBuddyRAGService()
+
+        if FirebaseApp.app() != nil {
+            self.db = Firestore.firestore()
+        } else {
+            NotificationCenter.default.addObserver(self, selector: #selector(setupFirestoreIfNeeded), name: UIApplication.didFinishLaunchingNotification, object: nil)
+        }
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func setupFirestoreIfNeeded() { if FirebaseApp.app() != nil { self.db = Firestore.firestore(); NotificationCenter.default.removeObserver(self) } }
+
+    private func requireDB() throws -> Firestore { if let db = self.db { return db }; throw NSError(domain: "AIAdvisorManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Firebase is not configured."]) }
     
     func updateUserContext(
         profile: UserProfile?,
@@ -46,7 +74,20 @@ class AIAdvisorManager: ObservableObject {
                 await loadChatHistory(uid: uid)
                 await loadUserInsights(uid: uid)
                 await generateAndStoreInsights(uid: uid)
+                // Ingest user data into RAG vector store
+                await ingestUserDataToRAG(uid: uid)
             }
+        }
+    }
+    
+    // Ingest user data into RAG vector store for semantic search
+    private func ingestUserDataToRAG(uid: String) async {
+        do {
+            print("🔍 [RAG] Ingesting user data into vector store...")
+            let report = await ragService.ingestFromFirestore(userId: uid)
+            print("✅ [RAG] Ingestion complete: \(report.components(separatedBy: "\n").count) items processed")
+        } catch {
+            print("❌ [RAG] Error ingesting data: \(error)")
         }
     }
     
@@ -54,6 +95,7 @@ class AIAdvisorManager: ObservableObject {
     private func loadChatHistory(uid: String) async {
         do {
             print("🔍 [AI] Loading chat history for user: \(uid)")
+            let db = try requireDB()
             let snapshot = try await db.collection("users").document(uid)
                 .collection("aiChatHistory")
                 .order(by: "timestamp", descending: false)
@@ -84,6 +126,7 @@ class AIAdvisorManager: ObservableObject {
     private func saveChatMessage(_ message: ChatMessage, uid: String) async {
         do {
             print("💾 [AI] Saving message to Firebase: \(message.text.prefix(50))...")
+            let db = try requireDB()
             try await db.collection("users").document(uid)
                 .collection("aiChatHistory")
                 .document(message.id)
@@ -106,6 +149,7 @@ class AIAdvisorManager: ObservableObject {
     private func loadUserInsights(uid: String) async {
         do {
             print("🔍 [AI] Loading user insights for: \(uid)")
+            let db = try requireDB()
             let doc = try await db.collection("users").document(uid)
                 .collection("aiInsights")
                 .document("profile")
@@ -204,6 +248,7 @@ class AIAdvisorManager: ObservableObject {
         
         // Store insights in Firebase
         do {
+            let db = try requireDB()
             try await db.collection("users").document(uid)
                 .collection("aiInsights")
                 .document("profile")
@@ -264,12 +309,55 @@ class AIAdvisorManager: ObservableObject {
             return ruleBasedAnswer
         }
         
+        // Retrieve relevant context from RAG vector store
+        let ragContext = await retrieveRAGContext(for: userInput)
+        
         // Try Phi-3 model first, fallback to rule-based if it fails
         do {
-            return try await generateResponseFromPhi3(for: userInput)
+            return try await generateResponseFromPhi3(for: userInput, ragContext: ragContext)
         } catch {
             print("⚠️ Phi-3 failed, using fallback: \(error)")
             return generateSmartResponse(for: userInput)
+        }
+    }
+    
+    // Retrieve relevant context from RAG vector store using semantic search
+    private func retrieveRAGContext(for query: String) async -> String {
+        guard let uid = userUID else { return "" }
+        
+        do {
+            // Use the RAG engine to retrieve top relevant chunks
+            let hits = try await MainActor.run {
+                try ragService.engine.retrieve(userId: uid, query: query, topK: 5)
+            }
+            
+            guard !hits.isEmpty else {
+                print("⚠️ [RAG] No relevant context found for query")
+                return ""
+            }
+            
+            // Filter hits by similarity threshold (only include highly relevant results)
+            let relevantHits = hits.filter { $0.score > 0.5 }
+            
+            guard !relevantHits.isEmpty else {
+                print("⚠️ [RAG] All retrieved results below similarity threshold")
+                return ""
+            }
+            
+            // Format retrieved context
+            var context = "📚 RETRIEVED CONTEXT (from your financial data):\n"
+            for (index, hit) in relevantHits.enumerated() {
+                let source = hit.chunk.metadata?["source"] ?? "unknown"
+                context += "\(index + 1). [\(source)] \(hit.chunk.text)\n"
+            }
+            context += "\n"
+            
+            let avgScore = relevantHits.map { $0.score }.reduce(0, +) / Float(relevantHits.count)
+            print("✅ [RAG] Retrieved \(relevantHits.count) relevant chunks (avg score: \(String(format: "%.3f", avgScore)))")
+            return context
+        } catch {
+            print("❌ [RAG] Error retrieving context: \(error)")
+            return ""
         }
     }
     
@@ -379,14 +467,14 @@ class AIAdvisorManager: ObservableObject {
         }
     }
     
-    private func generateResponseFromPhi3(for userInput: String) async throws -> String {
+    private func generateResponseFromPhi3(for userInput: String, ragContext: String = "") async throws -> String {
         let context = buildUserContext()
         let conversationInsights = buildConversationInsights()
         let userTone = detectUserTone(userInput)
         let adaptiveToneGuidance = getAdaptiveToneGuidance(for: userTone)
         
-        // Phi-3 optimized prompt - HIGHLY personalized with adaptive tone
-        let systemPrompt = """
+        // Phi-3 optimized prompt - HIGHLY personalized with adaptive tone and RAG context
+        var systemPrompt = """
         You are FINANCE BUDDY — \(userProfile?.name ?? "this user")'s personal financial advisor.
         You know them intimately. Reference their specific data to prove you remember everything.
         
@@ -395,6 +483,18 @@ class AIAdvisorManager: ObservableObject {
         \(context)
         ═══════════════════════════════════════
         
+        """
+        
+        // Add RAG-retrieved context if available (semantically relevant data)
+        if !ragContext.isEmpty {
+            systemPrompt += """
+            \(ragContext)
+            ═══════════════════════════════════════
+            
+            """
+        }
+        
+        systemPrompt += """
         CONVERSATION HISTORY:
         \(conversationInsights)
         
@@ -403,13 +503,14 @@ class AIAdvisorManager: ObservableObject {
         
         YOUR MISSION:
         • Give advice ONLY for THEIR situation (not generic tips)
-        • Reference their specific goals, spending, and behaviors
+        • Reference their specific goals, spending, and behaviors from the retrieved context above
         • Use their name naturally
         • Be encouraging about their progress
         • Call out patterns you've noticed ("I see you're spending a lot on...")
         • Match the tone guidance above based on their emotional state
         • 150 token limit - prioritize personalization over length
         • Never start a sentence you can't finish
+        • When RAG context is provided, prioritize that information as it's most relevant to the user's question
         """
         
         // Build messages array - include MORE conversation history for context
@@ -758,10 +859,11 @@ class AIAdvisorManager: ObservableObject {
         // Delete chat history from Firebase
         if let uid = userUID {
             do {
+                let db = try requireDB()
                 let snapshot = try await db.collection("users").document(uid)
                     .collection("aiChatHistory")
                     .getDocuments()
-                
+
                 for doc in snapshot.documents {
                     try await doc.reference.delete()
                 }

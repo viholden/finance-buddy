@@ -1,15 +1,29 @@
 import Foundation
+import UIKit
+import FirebaseCore
 import FirebaseFirestore
 
 class NotificationsManager: ObservableObject {
-    private let db = Firestore.firestore()
+    private var db: Firestore?
     @Published var notifications: [AppNotification] = []
     @Published var unreadCount = 0
     @Published var isLoading = false
+
+    init() {
+        if FirebaseApp.app() != nil { self.db = Firestore.firestore() }
+        else { NotificationCenter.default.addObserver(self, selector: #selector(setupFirestoreIfNeeded), name: UIApplication.didFinishLaunchingNotification, object: nil) }
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func setupFirestoreIfNeeded() { if FirebaseApp.app() != nil { self.db = Firestore.firestore(); NotificationCenter.default.removeObserver(self) } }
+
+    private func requireDB() throws -> Firestore { if let db = self.db { return db }; throw NSError(domain: "NotificationsManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Firebase is not configured."]) }
     
     func fetchNotifications(uid: String) async throws {
         await MainActor.run { self.isLoading = true }
         
+        let db = try requireDB()
         let snapshot = try await db.collection("users").document(uid).collection("notifications")
             .order(by: "sentAt", descending: true)
             .getDocuments()
@@ -26,6 +40,7 @@ class NotificationsManager: ObservableObject {
     }
     
     func markAsRead(uid: String, notificationId: String) async throws {
+        let db = try requireDB()
         try await db.collection("users").document(uid).collection("notifications")
             .document(notificationId).updateData(["read": true])
         
@@ -38,6 +53,7 @@ class NotificationsManager: ObservableObject {
     }
     
     func addNotification(uid: String, notification: AppNotification) async throws {
+        let db = try requireDB()
         let docRef = db.collection("users").document(uid).collection("notifications").document(notification.id)
         try docRef.setData(from: notification)
         

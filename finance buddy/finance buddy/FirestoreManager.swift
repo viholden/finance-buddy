@@ -1,11 +1,50 @@
 import Foundation
+import UIKit
+import FirebaseCore
 import FirebaseFirestore
 import FirebaseAuth
 
 class FirestoreManager: ObservableObject {
-    private let db = Firestore.firestore()
+    private var db: Firestore?
     @Published var userProfile: UserProfile?
     @Published var isLoading = false
+
+    enum FirestoreManagerError: Error {
+        case firebaseNotConfigured
+        var localizedDescription: String {
+            switch self {
+            case .firebaseNotConfigured:
+                return "Firebase is not configured. Call FirebaseApp.configure() before using Firestore."
+            }
+        }
+    }
+
+    init() {
+        if FirebaseApp.app() != nil {
+            self.db = Firestore.firestore()
+        } else {
+            // Defer initialization until after app finishes launching/configuration
+            NotificationCenter.default.addObserver(self, selector: #selector(setupFirestoreIfNeeded), name: UIApplication.didFinishLaunchingNotification, object: nil)
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func setupFirestoreIfNeeded() {
+        if FirebaseApp.app() != nil {
+            self.db = Firestore.firestore()
+            NotificationCenter.default.removeObserver(self)
+        }
+    }
+
+    private func requireDB() throws -> Firestore {
+        if let db = self.db {
+            return db
+        }
+        throw FirestoreManagerError.firebaseNotConfigured
+    }
     
     func createUserProfile(uid: String, name: String, email: String, questionnaireResponses: QuestionnaireResponse? = nil) async throws {
         let newProfile = UserProfile(
@@ -24,6 +63,7 @@ class FirestoreManager: ObservableObject {
             questionnaireResponses: questionnaireResponses
         )
         
+        let db = try requireDB()
         try db.collection("users").document(uid).setData(from: newProfile)
         await MainActor.run {
             self.userProfile = newProfile
@@ -34,7 +74,8 @@ class FirestoreManager: ObservableObject {
         await MainActor.run {
             self.isLoading = true
         }
-        
+
+        let db = try requireDB()
         let document = try await db.collection("users").document(uid).getDocument()
         
         if let profile = try? document.data(as: UserProfile.self) {
@@ -50,6 +91,7 @@ class FirestoreManager: ObservableObject {
     }
     
     func updateUserName(uid: String, newName: String) async throws {
+        let db = try requireDB()
         try await db.collection("users").document(uid).updateData([
             "name": newName
         ])
@@ -60,6 +102,7 @@ class FirestoreManager: ObservableObject {
     }
     
     func updateDarkMode(uid: String, darkMode: Bool) async throws {
+        let db = try requireDB()
         try await db.collection("users").document(uid).updateData([
             "darkMode": darkMode
         ])
@@ -70,6 +113,7 @@ class FirestoreManager: ObservableObject {
     }
     
     func updateLastLogin(uid: String) async throws {
+        let db = try requireDB()
         try await db.collection("users").document(uid).updateData([
             "lastLogin": Timestamp(date: Date())
         ])
@@ -81,7 +125,8 @@ class FirestoreManager: ObservableObject {
         
         let encoder = Firestore.Encoder()
         let encodedResponses = try encoder.encode(responsesWithTimestamp)
-        
+
+        let db = try requireDB()
         try await db.collection("users").document(uid).updateData([
             "questionnaireResponses": encodedResponses
         ])
@@ -108,6 +153,7 @@ class FirestoreManager: ObservableObject {
     }
     
     func fetchQuestionnaireHistory(uid: String) async throws -> [QuestionnaireHistoryEntry] {
+        let db = try requireDB()
         let snapshot = try await db.collection("users").document(uid)
             .collection("questionnaireHistory")
             .order(by: "timestamp", descending: true)

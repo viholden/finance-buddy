@@ -6,7 +6,9 @@
 //
 
 import Foundation
+import UIKit
 import FirebaseAuth
+import FirebaseCore
 
 class AuthenticationManager: ObservableObject {
     @Published var user: User?
@@ -18,16 +20,33 @@ class AuthenticationManager: ObservableObject {
     }
     
     init() {
-        self.user = Auth.auth().currentUser
-        
-        authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            self?.user = user
+        // If Firebase is already configured, attach the auth listener now.
+        if FirebaseApp.app() != nil {
+            self.user = Auth.auth().currentUser
+            authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+                self?.user = user
+            }
+        } else {
+            // Defer adding the listener until after app finished launching/configuration.
+            self.user = nil
+            NotificationCenter.default.addObserver(self, selector: #selector(setupAuthIfNeeded), name: UIApplication.didFinishLaunchingNotification, object: nil)
         }
     }
     
     deinit {
         if let listener = authStateListener {
             Auth.auth().removeStateDidChangeListener(listener)
+        }
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func setupAuthIfNeeded() {
+        if FirebaseApp.app() != nil {
+            self.user = Auth.auth().currentUser
+            authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+                self?.user = user
+            }
+            NotificationCenter.default.removeObserver(self)
         }
     }
     

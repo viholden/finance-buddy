@@ -1,14 +1,28 @@
 import Foundation
+import UIKit
+import FirebaseCore
 import FirebaseFirestore
 
 class ChallengesManager: ObservableObject {
-    private let db = Firestore.firestore()
+    private var db: Firestore?
     @Published var challenges: [Challenge] = []
     @Published var isLoading = false
+
+    init() {
+        if FirebaseApp.app() != nil { self.db = Firestore.firestore() }
+        else { NotificationCenter.default.addObserver(self, selector: #selector(setupFirestoreIfNeeded), name: UIApplication.didFinishLaunchingNotification, object: nil) }
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func setupFirestoreIfNeeded() { if FirebaseApp.app() != nil { self.db = Firestore.firestore(); NotificationCenter.default.removeObserver(self) } }
+
+    private func requireDB() throws -> Firestore { if let db = self.db { return db }; throw NSError(domain: "ChallengesManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Firebase is not configured."]) }
     
     func fetchChallenges(uid: String) async throws {
         await MainActor.run { self.isLoading = true }
         
+        let db = try requireDB()
         let snapshot = try await db.collection("users").document(uid).collection("challenges")
             .order(by: "startDate", descending: true)
             .getDocuments()
@@ -24,6 +38,7 @@ class ChallengesManager: ObservableObject {
     }
     
     func addChallenge(uid: String, challenge: Challenge) async throws {
+        let db = try requireDB()
         let docRef = db.collection("users").document(uid).collection("challenges").document(challenge.id)
         try docRef.setData(from: challenge)
         
@@ -33,6 +48,7 @@ class ChallengesManager: ObservableObject {
     }
     
     func updateChallenge(uid: String, challenge: Challenge) async throws {
+        let db = try requireDB()
         let docRef = db.collection("users").document(uid).collection("challenges").document(challenge.id)
         try docRef.setData(from: challenge)
         
@@ -52,6 +68,7 @@ class ChallengesManager: ObservableObject {
         
         try await updateChallenge(uid: uid, challenge: updatedChallenge)
         
+        let db = try requireDB()
         try await db.collection("users").document(uid).updateData([
             "totalPoints": FieldValue.increment(Int64(challenge.pointsAwarded))
         ])
