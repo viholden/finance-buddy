@@ -11,6 +11,8 @@ struct UserProfile: Codable {
     var createdAt: Date
     var lastLogin: Date
     var preferences: Preferences
+    var bankBalance: Double = 0
+    var lastBankUpdate: Date? = nil
     var questionnaireResponses: QuestionnaireResponse?
     
     struct Preferences: Codable {

@@ -6,6 +6,7 @@ struct AIAdvisorChatView: View {
     @StateObject private var aiManager = AIAdvisorManager()
     @StateObject private var expensesManager = ExpensesManager()
     @StateObject private var goalsManager = GoalsManager()
+    @StateObject private var bankingManager = BankingManager()
     
     @State private var newMessage = ""
     @State private var showingClearConfirmation = false
@@ -205,6 +206,7 @@ struct AIAdvisorChatView: View {
                 if let uid = authManager.user?.uid {
                     try? await expensesManager.fetchExpenses(uid: uid)
                     try? await goalsManager.fetchGoals(uid: uid)
+                    await bankingManager.fetchBankingData(uid: uid)
                     
                     // Update AI with FRESH user context
                     aiManager.updateUserContext(
@@ -212,7 +214,10 @@ struct AIAdvisorChatView: View {
                         expenses: expensesManager.expenses,
                         goals: goalsManager.goals,
                         questionnaire: firestoreManager.userProfile?.questionnaireResponses,
-                        uid: uid
+                        uid: uid,
+                        bankBalance: bankingManager.currentBalance,
+                        bankTransactions: bankingManager.transactions,
+                        bankLastUpdated: bankingManager.lastUpdated
                     )
                 }
             }
@@ -222,6 +227,7 @@ struct AIAdvisorChatView: View {
             if let uid = authManager.user?.uid {
                 try? await expensesManager.fetchExpenses(uid: uid)
                 try? await goalsManager.fetchGoals(uid: uid)
+                await bankingManager.fetchBankingData(uid: uid)
                 
                 // Update AI with user context and load chat history
                 aiManager.updateUserContext(
@@ -229,7 +235,10 @@ struct AIAdvisorChatView: View {
                     expenses: expensesManager.expenses,
                     goals: goalsManager.goals,
                     questionnaire: firestoreManager.userProfile?.questionnaireResponses,
-                    uid: uid
+                    uid: uid,
+                    bankBalance: bankingManager.currentBalance,
+                    bankTransactions: bankingManager.transactions,
+                    bankLastUpdated: bankingManager.lastUpdated
                 )
             }
         }
@@ -240,7 +249,10 @@ struct AIAdvisorChatView: View {
                 expenses: newValue,
                 goals: goalsManager.goals,
                 questionnaire: firestoreManager.userProfile?.questionnaireResponses,
-                uid: authManager.user?.uid
+                uid: authManager.user?.uid,
+                bankBalance: bankingManager.currentBalance,
+                bankTransactions: bankingManager.transactions,
+                bankLastUpdated: bankingManager.lastUpdated
             )
         }
         .onChange(of: goalsManager.goals) { oldValue, newValue in
@@ -250,7 +262,34 @@ struct AIAdvisorChatView: View {
                 expenses: expensesManager.expenses,
                 goals: newValue,
                 questionnaire: firestoreManager.userProfile?.questionnaireResponses,
-                uid: authManager.user?.uid
+                uid: authManager.user?.uid,
+                bankBalance: bankingManager.currentBalance,
+                bankTransactions: bankingManager.transactions,
+                bankLastUpdated: bankingManager.lastUpdated
+            )
+        }
+        .onChange(of: bankingManager.transactions) { _, newValue in
+            aiManager.updateUserContext(
+                profile: firestoreManager.userProfile,
+                expenses: expensesManager.expenses,
+                goals: goalsManager.goals,
+                questionnaire: firestoreManager.userProfile?.questionnaireResponses,
+                uid: authManager.user?.uid,
+                bankBalance: bankingManager.currentBalance,
+                bankTransactions: newValue,
+                bankLastUpdated: bankingManager.lastUpdated
+            )
+        }
+        .onChange(of: bankingManager.currentBalance) { _, newValue in
+            aiManager.updateUserContext(
+                profile: firestoreManager.userProfile,
+                expenses: expensesManager.expenses,
+                goals: goalsManager.goals,
+                questionnaire: firestoreManager.userProfile?.questionnaireResponses,
+                uid: authManager.user?.uid,
+                bankBalance: newValue,
+                bankTransactions: bankingManager.transactions,
+                bankLastUpdated: bankingManager.lastUpdated
             )
         }
     }

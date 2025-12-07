@@ -4,6 +4,7 @@ struct EnhancedGoalsView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @StateObject private var goalsManager = GoalsManager()
     @State private var showingAddGoal = false
+    @State private var editingGoal: Goal?
     
     var totalSaved: Double {
         goalsManager.goals.reduce(0) { $0 + $1.currentAmount }
@@ -82,7 +83,10 @@ struct EnhancedGoalsView: View {
                     .padding(.vertical, 60)
                 } else {
                     ForEach(goalsManager.goals) { goal in
-                        EnhancedGoalCard(goal: goal)
+                        Button(action: { editingGoal = goal }) {
+                            EnhancedGoalCard(goal: goal)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -101,6 +105,14 @@ struct EnhancedGoalsView: View {
         }
         .sheet(isPresented: $showingAddGoal) {
             AddGoalView(goalsManager: goalsManager)
+        }
+        .sheet(item: $editingGoal) { goal in
+            if let uid = authManager.userId {
+                EditGoalProgressSheet(uid: uid, goal: goal, goalsManager: goalsManager)
+            } else {
+                Text("Sign in to edit goals")
+                    .padding()
+            }
         }
         .task {
             if let userId = authManager.userId {
@@ -215,5 +227,82 @@ struct EnhancedGoalCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+}
+
+struct EditGoalProgressSheet: View, Identifiable {
+    let id = UUID()
+    let uid: String
+    @ObservedObject var goalsManager: GoalsManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var goal: Goal
+    @State private var amountText: String
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+    
+    init(uid: String, goal: Goal, goalsManager: GoalsManager) {
+        self.uid = uid
+        self._goal = State(initialValue: goal)
+        self._amountText = State(initialValue: String(format: "%.2f", goal.currentAmount))
+        self._goalsManager = ObservedObject(wrappedValue: goalsManager)
+    }
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Update Savings") {
+                    TextField("Amount saved", text: $amountText)
+                        .keyboardType(.decimalPad)
+                }
+                Section("Details") {
+                    HStack {
+                        Text("Goal")
+                        Spacer()
+                        Text(goal.name)
+                            .foregroundColor(.secondary)
+                    }
+                    HStack {
+                        Text("Target")
+                        Spacer()
+                        Text("$\(goal.targetAmount, specifier: "%.2f")")
+                            .foregroundColor(.secondary)
+                    }
+                }
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                }
+            }
+            .navigationTitle("Update Goal")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { saveGoal() }
+                        .disabled(isSaving)
+                }
+            }
+        }
+    }
+    
+    private func saveGoal() {
+        guard let amount = Double(amountText) else {
+            errorMessage = "Enter a valid number"
+            return
+        }
+        isSaving = true
+        Task {
+            do {
+                goal.currentAmount = max(0, amount)
+                let progress = goal.targetAmount > 0 ? min(goal.currentAmount / goal.targetAmount, 1.0) : 0
+                goal.progressPercent = progress
+                try await goalsManager.updateGoal(uid: uid, goal: goal)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isSaving = false
+        }
     }
 }

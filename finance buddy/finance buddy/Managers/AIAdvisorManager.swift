@@ -19,6 +19,9 @@ class AIAdvisorManager: ObservableObject {
     private var recentExpenses: [Expense] = []
     private var activeGoals: [Goal] = []
     private var questionnaireResponses: QuestionnaireResponse?
+    private var bankTransactions: [BankTransaction] = []
+    private var bankBalance: Double = 0
+    private var bankLastUpdated: Date?
     private var userUID: String?
     
     // AI-derived insights (generated and stored)
@@ -32,12 +35,18 @@ class AIAdvisorManager: ObservableObject {
         expenses: [Expense],
         goals: [Goal],
         questionnaire: QuestionnaireResponse?,
-        uid: String?
+        uid: String?,
+        bankBalance: Double? = nil,
+        bankTransactions: [BankTransaction] = [],
+        bankLastUpdated: Date? = nil
     ) {
         self.userProfile = profile
         self.recentExpenses = expenses
         self.activeGoals = goals
         self.questionnaireResponses = questionnaire
+        self.bankBalance = bankBalance ?? profile?.bankBalance ?? self.bankBalance
+        self.bankTransactions = bankTransactions
+        self.bankLastUpdated = bankLastUpdated ?? profile?.lastBankUpdate ?? self.bankLastUpdated
         self.userUID = uid
         
         // Load chat history and insights from Firebase when user context is set
@@ -276,6 +285,7 @@ class AIAdvisorManager: ObservableObject {
     // 🔥 FINANCIAL RULES ENGINE - Hard-coded financial wisdom for accuracy
     private func applyFinancialRules(to question: String) -> String? {
         let q = question.lowercased()
+        let name = userProfile?.name ?? "friend"
         
         // EMERGENCY FUND RULES
         if q.contains("emergency fund") && (q.contains("how much") || q.contains("size") || q.contains("should")) {
@@ -283,54 +293,56 @@ class AIAdvisorManager: ObservableObject {
             if let income = income {
                 let min = Int(income * 4)
                 let max = Int(income * 6)
-                return "💡 **Financial Rule:** Emergency funds should cover 3-6 months of expenses. Based on your income, aim for $\(min) to $\(max). Start with $500-1000 and build from there. Keep it in a high-yield savings account for easy access."
+                let message = "💡 \(name.capitalized), emergency funds should cover 3-6 months of expenses. Based on your income, aim for \(formatCurrency(Double(min), maxFractionDigits: 0)) to \(formatCurrency(Double(max), maxFractionDigits: 0)). Start with $500-1000 and build from there in a high-yield savings account."
+                return ruleResponse(message, includeSpending: true, includeGoals: true, includeCash: true)
             } else {
-                return "💡 **Financial Rule:** Emergency funds should cover 3-6 months of expenses. Start with $500-1000 and build from there. Keep it in a high-yield savings account for easy access."
+                return ruleResponse("💡 \(name.capitalized), emergency funds should cover 3-6 months of expenses. Start with $500-1000 and keep it in a high-yield savings account for easy access.", includeSpending: true, includeGoals: true, includeCash: true)
             }
         }
         
         // DEBT PAYOFF STRATEGY
         if q.contains("debt") && (q.contains("pay") || q.contains("strategy") || q.contains("first")) {
-            return "💡 **Financial Rule:** Use the Debt Avalanche method - pay minimums on all debts, then put extra money toward the HIGHEST interest rate debt first. This saves you the most money. (Alternative: Debt Snowball targets smallest balance first for motivation.)"
+            return ruleResponse("💡 \(name.capitalized), use the Debt Avalanche method: pay minimums on everything, then throw extra cash at the HIGHEST interest rate balance. Prefer motivation? Tackle the smallest balance first with the Debt Snowball.", includeSpending: true, includeGoals: false, includeCash: true)
         }
         
         // HIGH INTEREST DEBT PRIORITY
         if (q.contains("credit card") && q.contains("debt")) || (q.contains("high interest")) {
-            return "💡 **Financial Rule:** High-interest debt (>10% APR) is your #1 priority. Pay minimums everywhere else, attack this first. Every dollar here saves you more than investing would earn. Consider balance transfers to 0% APR cards."
+            return ruleResponse("💡 \(name.capitalized), high-interest debt (>10% APR) should be priority #1. Pay minimums elsewhere and attack this balance—it saves more than investing right now. Consider a 0% balance transfer if your credit allows.", includeSpending: true, includeGoals: false, includeCash: true)
         }
         
         // EMPLOYER MATCH (401k)
         if (q.contains("401k") || q.contains("401(k)")) && q.contains("match") {
-            return "💡 **Financial Rule:** ALWAYS contribute enough to get full employer match - it's free money! This is a 100% instant return. Do this BEFORE paying extra on low-interest debt or investing elsewhere."
+            return ruleResponse("💡 \(name.capitalized), always contribute enough to grab the full employer 401(k) match—it's a 100% return. Do that before sending extra money toward low-interest debt or taxable investing.", includeSpending: false, includeGoals: true, includeCash: true)
         }
         
         // HOUSING COST RULE
         if q.contains("rent") || q.contains("housing") || q.contains("mortgage") {
             if q.contains("how much") || q.contains("afford") || q.contains("should") {
                 let income = extractIncome(from: questionnaireResponses)
-                let maxHousing = income.map { Int($0 * 0.3) }
-                return "💡 **Financial Rule:** Housing should be ≤30% of take-home pay. \(maxHousing.map { "For you, that's around $\($0)/month max." } ?? "") This leaves room for savings, emergencies, and other goals."
+                let maxHousing = income.map { formatCurrency($0 * 0.3, maxFractionDigits: 0) }
+                let note = maxHousing.map { "For you, that caps housing near \($0)/month." } ?? ""
+                return ruleResponse("💡 \(name.capitalized), aim to keep housing ≤30% of take-home pay. \(note) That buffer protects your savings rate and goal progress.", includeSpending: true, includeGoals: true, includeCash: true)
             }
         }
         
         // SAVINGS RATE TARGET
         if q.contains("save") && (q.contains("how much") || q.contains("percentage") || q.contains("%")) {
-            return "💡 **Financial Rule:** Aim to save 20% of income using the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt. Start with what you can (even 5-10%) and increase over time."
+            return ruleResponse("💡 \(name.capitalized), aim to save 20% of income using the 50/30/20 rule (Needs 50 / Wants 30 / Savings & Debt 20). Start at 5-10% if needed and stair-step upward.", includeSpending: true, includeGoals: true, includeCash: true)
         }
         
         // INVESTING BASICS (INDEX FUNDS)
         if q.contains("invest") && (q.contains("start") || q.contains("beginner") || q.contains("how")) {
-            return "💡 **Financial Rule:** Start with low-cost index funds (like S&P 500). They're diversified, simple, and historically return 10%/year. Open a Roth IRA if you qualify. Invest consistently, ignore short-term volatility."
+            return ruleResponse("💡 \(name.capitalized), start with low-cost index funds (S&P 500, total market). Open a Roth IRA if you qualify, automate monthly buys, and ignore short-term swings.", includeSpending: false, includeGoals: true, includeCash: true)
         }
         
         // RISKY INVESTMENTS (SAFETY CHECK)
         if q.contains("stock pick") || q.contains("day trad") || q.contains("crypto") || q.contains("get rich") {
-            return "⚠️ **Safety Check:** Individual stock picking, day trading, and speculative investments are high-risk. 90% of day traders lose money. For most people, index funds and long-term investing are safer and more profitable."
+            return ruleResponse("⚠️ Heads up, \(name.capitalized): stock picking, day trading, and speculative crypto are high-risk. 90% of day traders lose money. Stay anchored in diversified index funds unless your essentials and goals are funded.", includeSpending: true, includeGoals: true, includeCash: true)
         }
         
         // RETIREMENT SAVINGS
         if q.contains("retire") && (q.contains("how much") || q.contains("save")) {
-            return "💡 **Financial Rule:** Save 15% of income for retirement starting in your 20s-30s. Use tax-advantaged accounts: 401(k) → Roth IRA → taxable. The earlier you start, the more compound interest works for you."
+            return ruleResponse("💡 \(name.capitalized), save ~15% of income for retirement: 401(k) up to the match → Roth IRA → taxable investing. Earlier dollars have decades to compound.", includeSpending: false, includeGoals: true, includeCash: true)
         }
         
         return nil // No rule triggered, let AI handle it
@@ -349,34 +361,126 @@ class AIAdvisorManager: ObservableObject {
         return nil
     }
     
-    private func generateSmartResponse(for: String) -> String {
-        let input = `for`.lowercased()
-        let context = buildUserContext()
+    private func generateSmartResponse(for userInput: String) -> String {
+        let input = userInput.lowercased()
+        let name = userProfile?.name ?? "friend"
         
-        // Pattern matching for quick, relevant responses
-        if input.contains("save") || input.contains("saving") {
-            return "💰 Great question about saving! Here are some tips:\n\n• Set up automatic transfers to savings right after payday\n• Try the 50/30/20 rule: 50% needs, 30% wants, 20% savings\n• Start with a small emergency fund ($500-1000)\n• Use apps to round up purchases and save the difference\n\nBased on your profile\(context.isEmpty ? "" : ", you could start by saving just $50/month and build from there!")."
-        } else if input.contains("budget") {
-            return "📊 Budgeting Tips:\n\n• Track all expenses for 30 days to see patterns\n• Use the envelope method for categories you overspend on\n• Review your budget weekly, not just monthly\n• Be realistic - don't cut everything you enjoy\n\nSmall adjustments work better than drastic changes!"
-        } else if input.contains("debt") || input.contains("loan") || input.contains("credit card") {
-            return "💳 Managing Debt:\n\n• Pay minimums on everything, then extra on highest interest debt (avalanche method)\n• OR pay off smallest balance first for motivation (snowball method)\n• Call creditors to negotiate lower rates\n• Consider a balance transfer for credit cards\n\nYou've got this! Every payment is progress."
-        } else if input.contains("invest") || input.contains("stock") || input.contains("retirement") {
-            return "📈 Investment Basics:\n\n• Start with employer 401(k) match (free money!)\n• Open a Roth IRA for tax-free growth\n• Index funds are simple and effective for beginners\n• Invest consistently, not just when markets are up\n\nTime in the market beats timing the market!"
-        } else if input.contains("emergency fund") {
-            return "🚨 Emergency Fund:\n\n• Target: 3-6 months of expenses\n• Start small: Even $500 makes a difference\n• Keep it in a high-yield savings account\n• Don't touch it unless it's truly an emergency\n\nThis gives you peace of mind and financial stability!"
-        } else if input.contains("spend") || input.contains("expense") {
-            return "💸 Smart Spending:\n\n• Wait 24 hours before non-essential purchases over $50\n• Unsubscribe from marketing emails to reduce temptation\n• Use cash for discretionary spending\n• Find free alternatives (library, parks, free events)\n\nIt's about being intentional, not depriving yourself!"
-        } else if input.contains("goal") {
-            return "🎯 Setting Financial Goals:\n\n• Make them SMART: Specific, Measurable, Achievable, Relevant, Time-bound\n• Break big goals into smaller milestones\n• Celebrate progress along the way\n• Adjust as life changes\n\nYour goals should excite you, not stress you out!"
-        } else if input.contains("income") || input.contains("earn") || input.contains("raise") {
-            return "💼 Increasing Income:\n\n• Ask for a raise (document your accomplishments first)\n• Start a side hustle aligned with your skills\n• Sell items you no longer use\n• Take on freelance projects\n\nEven an extra $200/month makes a big difference!"
-        } else if input.contains("thank") || input.contains("thanks") {
-            return "You're welcome! I'm here to help you build a strong financial foundation. Feel free to ask anything else! 😊"
-        } else if input.contains("hello") || input.contains("hi ") || input.contains("hey") {
-            return "Hi there! 👋 I'm your AI Financial Advisor. I can help you with budgeting, saving, debt management, investing, and more. What financial topic would you like to discuss?"
-        } else {
-            return "I can help you with:\n\n💰 Saving money\n📊 Creating a budget\n💳 Managing debt\n📈 Investing basics\n🚨 Building an emergency fund\n🎯 Setting financial goals\n\nWhat would you like to know more about?"
+        func respond(_ base: String, includeSpending: Bool = false, includeGoals: Bool = false, includeCash: Bool = false) -> String {
+            base + personalizedBullets(includeSpending: includeSpending, includeGoals: includeGoals, includeCash: includeCash)
         }
+        
+        if input.contains("save") || input.contains("saving") {
+            let base = "💰 Hey \(name), automate a transfer the morning you get paid, let the 50/30/20 rule guide cash flow, and sweep any windfalls straight into your highest-priority goal."
+            return respond(base, includeSpending: true, includeGoals: true, includeCash: true)
+        } else if input.contains("budget") {
+            let base = "📊 Let's tighten your budget, \(name). Track every swipe for 30 days, set category caps where you overspend, and do a five-minute review every Sunday so nothing drifts."
+            return respond(base, includeSpending: true, includeGoals: true, includeCash: false)
+        } else if input.contains("debt") || input.contains("loan") || input.contains("credit card") {
+            let base = "💳 Tackle debt avalanche-style: minimums everywhere, then stack extra dollars on the highest APR. If you need momentum, knock out the smallest balance first, then roll those payments forward."
+            return respond(base, includeSpending: true, includeGoals: false, includeCash: true)
+        } else if input.contains("invest") || input.contains("stock") || input.contains("retirement") {
+            let base = "📈 Start with the 401(k) match, open a Roth IRA for tax-free growth, and automate low-cost index fund buys. Keep contributions steady regardless of headlines."
+            return respond(base, includeSpending: false, includeGoals: true, includeCash: true)
+        } else if input.contains("emergency fund") {
+            let base = "🚨 Build the emergency fund in layers: $500 as a shock absorber, then grind toward 3-6 months of expenses in a high-yield savings account you rarely touch."
+            return respond(base, includeSpending: true, includeGoals: true, includeCash: true)
+        } else if input.contains("spend") || input.contains("expense") {
+            let base = "💸 Add friction before spending: institute a 24-hour rule for wants, delete saved cards from shopping apps, and pre-set weekly limits for the categories that jump out."
+            return respond(base, includeSpending: true, includeGoals: false, includeCash: false)
+        } else if input.contains("goal") {
+            let base = "🎯 Make each goal a mini project: set a target date, back into the monthly contribution, and celebrate the 25/50/75% milestones so motivation stays high."
+            return respond(base, includeSpending: false, includeGoals: true, includeCash: true)
+        } else if input.contains("income") || input.contains("earn") || input.contains("raise") {
+            let base = "💼 Document wins for your next raise conversation, then add a flexible side hustle (tutoring, freelancing, campus gigs) so new income streams feed your goals."
+            return respond(base, includeSpending: true, includeGoals: true, includeCash: true)
+        } else if input.contains("thank") || input.contains("thanks") {
+            let base = "You're welcome, \(name)! I'm keeping tabs on your cash flow and goals, so just say the word when you want to tweak the plan."
+            return respond(base, includeSpending: false, includeGoals: true, includeCash: true)
+        } else if input.contains("hello") || input.contains("hi ") || input.contains("hey") {
+            let base = "Hey \(name)! I'm already watching your spending, goals, and deposits. Ask me anything—from tightening Food spending to accelerating that top goal."
+            return respond(base, includeSpending: true, includeGoals: true, includeCash: true)
+        } else {
+            let base = "I'm tracking your expenses, deposits, and goals in real time, so every suggestion will tie back to your actual numbers. What part of your plan do you want to optimize next?"
+            return respond(base, includeSpending: true, includeGoals: true, includeCash: true)
+        }
+    }
+
+    private func ruleResponse(_ text: String, includeSpending: Bool = true, includeGoals: Bool = true, includeCash: Bool = true) -> String {
+        text + personalizedBullets(includeSpending: includeSpending, includeGoals: includeGoals, includeCash: includeCash)
+    }
+    
+    private func personalizedBullets(includeSpending: Bool, includeGoals: Bool, includeCash: Bool) -> String {
+        var bullets: [String] = []
+        if includeSpending, let spending = spendingHotspotSummary() {
+            bullets.append(spending)
+        }
+        if includeGoals, let goalSummary = goalFocusSummary() {
+            bullets.append(goalSummary)
+        }
+        if includeCash, let cashSummary = cashFlowSummary() {
+            bullets.append(cashSummary)
+        }
+        guard !bullets.isEmpty else { return "" }
+        return "\n\nFor you:\n• " + bullets.joined(separator: "\n• ")
+    }
+    
+    private func spendingHotspotSummary() -> String? {
+        guard !recentExpenses.isEmpty else { return nil }
+        let totalSpent = recentExpenses.reduce(0.0) { $0 + $1.amount }
+        guard totalSpent > 0 else { return nil }
+        let grouped = Dictionary(grouping: recentExpenses, by: { $0.category })
+        guard let topEntry = grouped.max(by: { lhs, rhs in
+            lhs.value.reduce(0.0) { $0 + $1.amount } < rhs.value.reduce(0.0) { $0 + $1.amount }
+        }) else { return nil }
+        let topAmount = topEntry.value.reduce(0.0) { $0 + $1.amount }
+        let percentage = Int((topAmount / totalSpent) * 100)
+        return "You've spent about \(formatCurrency(topAmount, maxFractionDigits: 0)) in \(topEntry.key) recently (~\(percentage)% of tracked expenses)."
+    }
+    
+    private func goalFocusSummary() -> String? {
+        let progressableGoals = activeGoals.filter { $0.targetAmount > 0 }
+        guard !progressableGoals.isEmpty else { return nil }
+        let prioritized = progressableGoals.max(by: { lhs, rhs in
+            let leftProgress = lhs.currentAmount / lhs.targetAmount
+            let rightProgress = rhs.currentAmount / rhs.targetAmount
+            return leftProgress < rightProgress
+        })
+        guard let goal = prioritized else { return nil }
+        let progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0
+        let remaining = max(goal.targetAmount - goal.currentAmount, 0)
+        return "You're \(Int(progress))% toward \(goal.name) with \(formatCurrency(remaining, maxFractionDigits: 0)) left to stack."
+    }
+    
+    private func cashFlowSummary() -> String? {
+        var parts: [String] = []
+        if bankBalance > 0 {
+            var balanceLine = "Cash on hand is \(formatCurrency(bankBalance, maxFractionDigits: 0))"
+            if let updated = bankLastUpdated {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                balanceLine += " (synced \(formatter.string(from: updated)))"
+            }
+            parts.append(balanceLine)
+        }
+        let calendar = Calendar.current
+        let monthlyIncome = bankTransactions.filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
+            .reduce(0.0) { $0 + $1.amount }
+        if monthlyIncome > 0 {
+            parts.append("you've logged \(formatCurrency(monthlyIncome, maxFractionDigits: 0)) of deposits this month")
+        } else if let estimatedIncome = extractIncome(from: questionnaireResponses) {
+            parts.append("income is currently estimated around \(formatCurrency(estimatedIncome, maxFractionDigits: 0))/month")
+        }
+        guard !parts.isEmpty else { return nil }
+        return parts.joined(separator: ", ") + "."
+    }
+    
+    private func formatCurrency(_ amount: Double, maxFractionDigits: Int = 2) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = userProfile?.currency ?? "USD"
+        formatter.maximumFractionDigits = maxFractionDigits
+        formatter.minimumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$\(String(format: "%.2f", amount))"
     }
     
     private func generateResponseFromPhi3(for userInput: String) async throws -> String {
@@ -413,18 +517,24 @@ class AIAdvisorManager: ObservableObject {
         """
         
         // Build messages array - include MORE conversation history for context
-        var apiMessages: [[String: String]] = []
+        var apiMessages: [[String: String]] = [[
+            "role": "system",
+            "content": systemPrompt
+        ]]
         
         // Add last 6 messages for richer context
-        let conversationHistory = messages.suffix(6).map { message in
+        var conversationHistory: [[String: String]] = messages.suffix(6).map { message in
             ["role": message.isUser ? "user" : "assistant", "content": message.text]
         }
-        apiMessages.append(contentsOf: conversationHistory)
         
-        // Add current user message with system prompt on first message
-        let isFirstMessage = messages.isEmpty
-        let userMessageContent = isFirstMessage ? "\(systemPrompt)\n\nQuestion: \(userInput)" : userInput
-        apiMessages.append(["role": "user", "content": userMessageContent])
+        // Ensure the latest user question is included once
+        if conversationHistory.isEmpty {
+            conversationHistory.append(["role": "user", "content": userInput])
+        } else if conversationHistory.last?["role"] != "user" || conversationHistory.last?["content"] != userInput {
+            conversationHistory.append(["role": "user", "content": userInput])
+        }
+        
+        apiMessages.append(contentsOf: conversationHistory)
         
         let requestBody: [String: Any] = [
             "model": modelName,
@@ -555,6 +665,30 @@ class AIAdvisorManager: ObservableObject {
                 context += "Additional: \(comments)\n"
             }
             context += "\n"
+        }
+
+        // BANK OVERVIEW
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        context += "BANK OVERVIEW:\n"
+        context += "Cash on hand: $\(String(format: "%.2f", bankBalance))\n"
+        if let updated = bankLastUpdated {
+            context += "Last synced: \(formatter.string(from: updated))\n"
+        }
+        
+        if !bankTransactions.isEmpty {
+            let recentDeposits = bankTransactions.prefix(4)
+            context += "Recent deposits:\n"
+            for deposit in recentDeposits {
+                context += "  • $\(String(format: "%.2f", deposit.amount)) from \(deposit.source) on \(formatter.string(from: deposit.date)) (\(deposit.type.label))\n"
+            }
+            
+            let calendar = Calendar.current
+            let monthlyIncome = bankTransactions.filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
+                .reduce(0) { $0 + $1.amount }
+            context += "Cash inflow this month: $\(String(format: "%.2f", monthlyIncome))\n\n"
+        } else {
+            context += "No recorded deposits yet.\n\n"
         }
         
         // ACTIVE GOALS (what they're working toward) - ENHANCED TRACKING

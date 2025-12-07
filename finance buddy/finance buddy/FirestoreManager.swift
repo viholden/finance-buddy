@@ -21,6 +21,8 @@ class FirestoreManager: ObservableObject {
                 notifications: true,
                 language: "en"
             ),
+            bankBalance: 0,
+            lastBankUpdate: Date(),
             questionnaireResponses: questionnaireResponses
         )
         

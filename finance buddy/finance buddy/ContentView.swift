@@ -63,26 +63,24 @@ struct DashboardView: View {
     @EnvironmentObject var notificationsManager: NotificationsManager
     @StateObject private var expensesManager = ExpensesManager()
     @StateObject private var goalsManager = GoalsManager()
+    @StateObject private var bankingManager = BankingManager()
     @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var showingProfile = false
     @State private var showingNotifications = false
+    @State private var showingAddExpense = false
+    @State private var showingAddGoal = false
+    @State private var showingStats = false
+    @State private var showingAIAdvisor = false
     
     var totalExpenses: Double {
         expensesManager.expenses.reduce(0) { $0 + $1.amount }
     }
     
     var totalIncome: Double {
-        // Calculate from questionnaire income range or use 0
-        guard let incomeRange = firestoreManager.userProfile?.questionnaireResponses?.incomeRange else { return 0 }
-        // Parse income range (e.g., "$50,000 - $75,000")
-        if incomeRange.contains("-") {
-            let parts = incomeRange.components(separatedBy: "-")
-            if let firstPart = parts.first?.trimmingCharacters(in: .whitespaces) {
-                let numericString = firstPart.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: ",", with: "")
-                return Double(numericString) ?? 0
-            }
-        }
-        return 0
+        let calendar = Calendar.current
+        return bankingManager.transactions
+            .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
+            .reduce(0) { $0 + $1.amount }
     }
     
     var totalBalance: Double {
@@ -181,10 +179,18 @@ struct DashboardView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    QuickActionCard(icon: "plus.circle.fill", title: "Add Expense", color: Color(red: 0.3, green: 0.8, blue: 0.6))
-                    QuickActionCard(icon: "target", title: "New Goal", color: Color(red: 0.2, green: 0.7, blue: 0.5))
-                    QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "View Stats", color: Color(red: 0.4, green: 0.85, blue: 0.65))
-                    QuickActionCard(icon: "message.fill", title: "Ask AI", color: Color(red: 0.25, green: 0.75, blue: 0.55))
+                    QuickActionCard(icon: "plus.circle.fill", title: "Add Expense", color: Color(red: 0.3, green: 0.8, blue: 0.6)) {
+                        showingAddExpense = true
+                    }
+                    QuickActionCard(icon: "target", title: "New Goal", color: Color(red: 0.2, green: 0.7, blue: 0.5)) {
+                        showingAddGoal = true
+                    }
+                    QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "View Stats", color: Color(red: 0.4, green: 0.85, blue: 0.65)) {
+                        showingStats = true
+                    }
+                    QuickActionCard(icon: "message.fill", title: "Ask AI", color: Color(red: 0.25, green: 0.75, blue: 0.55)) {
+                        showingAIAdvisor = true
+                    }
                 }
                 .padding(.horizontal)
             }
@@ -282,10 +288,37 @@ struct DashboardView: View {
                     NotificationsView()
                 }
             }
+            .sheet(isPresented: $showingAddExpense) {
+                NavigationView {
+                    AddExpenseView(expensesManager: expensesManager)
+                }
+            }
+            .sheet(isPresented: $showingAddGoal) {
+                AddGoalView(goalsManager: goalsManager)
+            }
+            .sheet(isPresented: $showingStats) {
+                NavigationView {
+                    DashboardStatsSheet(
+                        totalBalance: totalBalance,
+                        totalIncome: totalIncome,
+                        totalExpenses: totalExpenses,
+                        goals: goalsManager.goals
+                    )
+                }
+            }
+            .sheet(isPresented: $showingAIAdvisor) {
+                NavigationView {
+                    AIAdvisorChatView()
+                }
+            }
             .task {
                 if let userId = authManager.userId {
+                    if firestoreManager.userProfile == nil {
+                        try? await firestoreManager.fetchUserProfile(uid: userId)
+                    }
                     try? await expensesManager.fetchExpenses(uid: userId)
                     try? await goalsManager.fetchGoals(uid: userId)
+                    await bankingManager.fetchBankingData(uid: userId)
                 }
             }
         }
@@ -320,28 +353,73 @@ struct QuickActionCard: View {
     let icon: String
     let title: String
     let color: Color
+    let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 60, height: 60)
+        Button(action: action) {
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.2))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 28))
+                        .foregroundColor(color)
+                }
                 
-                Image(systemName: icon)
-                    .font(.system(size: 28))
-                    .foregroundColor(color)
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+            .frame(width: 100)
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct DashboardStatsSheet: View {
+    let totalBalance: Double
+    let totalIncome: Double
+    let totalExpenses: Double
+    let goals: [Goal]
+    
+    var body: some View {
+        List {
+            Section("Cash Flow") {
+                statRow(title: "Monthly Income", value: totalIncome)
+                statRow(title: "Monthly Expenses", value: totalExpenses)
+                statRow(title: "Income - Expenses", value: totalBalance)
             }
             
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.primary)
+            if !goals.isEmpty {
+                Section("Goals Snapshot") {
+                    ForEach(goals.prefix(5)) { goal in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(goal.name)
+                                .font(.headline)
+                            Text("$\(Int(goal.currentAmount)) / $\(Int(goal.targetAmount))")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
         }
-        .frame(width: 100)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .navigationTitle("Financial Stats")
+    }
+    
+    private func statRow(title: String, value: Double) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Text("$\(value, specifier: "%.2f")")
+                .fontWeight(.semibold)
+        }
     }
 }
 
