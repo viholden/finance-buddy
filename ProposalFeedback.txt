@@ -1,29 +1,29 @@
-CMSI 4071 Fall 2025
+
+CMSI 4072 Spring 2026
 Project Proposal Feedback
-Project: Finance-Buddy
+Project: Schedulr
 =========================
+Proposal Document [2 points]:
+   Your updated Finance Buddy proposal meets the core requirements for
+   the Verbal Description and Justification Sections and is largely complete
+   according to CMSI 4072 expectations.  The proposal is clear,
+   well-structured, and demonstrates strong understanding of both the
+   problem and the solution.
+      Verbal Description — Complete
+      Justification Paragraphs — Complete
+      Suggested Enhancements — Add user-flow narrative, MVP clarity,
+         risk analysis, stronger software-engineering ties
 
-Proposal Document [3 points]:
------------------------------
-You still need a proposal document in your repository.  I can't evaluate
-what isn't there! :D  Make sure you do that and put it into place so I
-can give you some feedback on it.  Once it's there, you'll get the points
-for the evaluation.
+Proposal Presentation [Slides and video] [3 points]:
+   Slides:
+      Nice work on the new set of slides!  I like the clean color scheme and
+      the graphics are nice and professional-looking.  One suggestion is to
+      use less text under the headings so you can make it bigger and easier
+      to read.
+   Video:
 
-Proposal Presentation [2 points]:
----------------------------------
-Your presentation was very good, met all the requirements as listed, and
-provided enough detail so the audience saw interested without having so
-much text that they couldn't read it all before the next slide appeared.
-I enjoyed the presentation and you answered questions well.  Good audience
-reception, too.  This will be a #VERY# interesting project!  So many folks
-have no idea about how to handle their finances or make a budget, and even
-we old folks can use help!
 
 Summary:
 --------
-Nice job overall!  Keep up the good work.
 
-2 out of 5 which is not the best on this deliverable.  Make sure you write
-and commit a proposal DOCUMENT for full points.
-
+Nice job overall!  Keep up the good work.  Will update after video is posted.
