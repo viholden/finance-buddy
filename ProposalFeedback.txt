@@ -1,7 +1,7 @@
 
 CMSI 4072 Spring 2026
 Project Proposal Feedback
-Project: Schedulr
+Project: Finance Buddy
 =========================
 Proposal Document [2 points]:
    Your updated Finance Buddy proposal meets the core requirements for
@@ -20,10 +20,23 @@ Proposal Presentation [Slides and video] [3 points]:
       the graphics are nice and professional-looking.  One suggestion is to
       use less text under the headings so you can make it bigger and easier
       to read.
-   Video:
 
 
 Summary:
 --------
 
 Nice job overall!  Keep up the good work.  Will update after video is posted.
+
+
+VIDEO EVALUATION
+================
+This is a good presentation, but there are a few idiosyncrasies to mention.
+First off, while A'Kaia is talking Natasha's picture is displayed.  Second,
+you are obviously reading from a script, which can get boring to people in
+the audience.  It is better to talk from your head knowledge instead ~ it's
+more personal and engaging, and makes your presentation less like a sales
+presentation.  You want to keep away from making the audience feel like,
+"Good evening, is the lady of the house at home?"
+
+Nice work overall on this.  Five of Five points on the deliverable.
+
