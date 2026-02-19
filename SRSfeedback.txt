@@ -1,0 +1,80 @@
+
+Documentation Feedback ~ Deliverable #2
+Software Requirements Specification
+Initial Development Schedule
+CMSI 4072 Spring 2026
+=======================================
+
+COMPONENT BREAKDOWN:
+   Strengths:
+      Contains more than the minimum: models, risks, agile process, etc.
+      Organized and easy to follow.
+   Suggestions:
+      The SRS does not contain a separate performance requirements section,
+         which is expected for completeness
+      Environment/Execution Requirements are embedded implicitly (iOS,
+         Firebase) but not presented as a dedicated section.
+
+FUNCTIONAL REQUIREMENTS:
+   Strengths:
+      Very extensive functional coverage; far above typical SRS completeness.
+      All requirements are clear, testable, and framed as user stories with
+         acceptance criteria
+   Suggestions:
+      Some requirements lack explicit system-triggered behavior
+         (e.g., what happens on errors, invalid session tokens).
+      Some user stories reference dependent components
+         (AI module, gamification backend) but no functional requirements
+         for their backend interactions.
+      Could improve traceability
+         (useful for completeness checks per AcqNotes completeness guidelines).
+
+PERFORMANCE REQUIREMENTS:
+   Strengths:
+      Provides some quantitative metrics.
+      Addresses both speed and reliability.
+   Suggestions:
+      No load/throughput requirements
+         (requests per second, max concurrent users).
+      No performance requirements for reporting
+         (PDF generation, export timing).
+      No requirements for:
+         Notification delivery latency
+         File upload/processing performance (e.g., CSV import speed)
+         Offline mode sync timing
+         Database query / load performance
+         API performance
+
+ENVIRONMENT REQUIREMENTS:
+   Strengths:
+      Identifies platform (iOS), backend (Firebase), and AI system context.
+      Sufficiently describes technological constraints.
+   Suggestions:
+      No dedicated Environment Requirements section
+         (e.g., device storage, OS versions, network needs).
+      No description of development environment: tools, libraries, languages,
+         supported OS/IDE.
+      No explicit execution constraints: required bandwidth, minimum iPhone
+         model, battery usage expectations.
+
+OVERALL ASSESSMENT:
+   Category                          Points
+   Component Breakdown               0.8/1
+   Functional Requirements           3.7/4
+   Performance Requirements          1.8/2
+   Environment Requirements          0.9/1
+                                     =====
+   Subtotal                          7.2/8
+   Preliminary Schedule              2.0/2   [Freebee]
+   ------------------------------------------------------
+   Total Percentage:   9.2/10 = 92% which is an A-minus
+
+
+OVERALL ASSESSMENT:
+To improve completeness, do the following:
+   Add a complete Environment Requirements section
+   Strengthen functional completeness
+   A requirements traceability matrix (RTM) helps verify completeness
+
+Nice work on this deliverable ~ You're doing fine!
+
