@@ -1,32 +1,44 @@
 
 
-HW 2 - Piloni & Miles Textbook
-CMSI 4071 Fall 2025
+HW 2 - Stephens Book Chapters 5 and 6
+CMSI 4072 Spring 2026
 
-Category        Weight     Earned   Re-eval
-===========    ========    ======   =======
-Problem 1      [3 pts.]      0.0       3/ 3
-Problem 2      [4 pts.]      0.0       4/ 4
-Problem 3      [6 pts.]      0.0       6/ 6
-Problem 4      [9 pts.]      0.0       9/ 9
-Problem 5      [2 pts.]      0.0       2/ 2
-Problem 6      [7 pts.]      0.0       7/ 7
-Problem 7      [1 pt.]       0.0       1/ 1
-Problem 8      [3 pts.]      0.0       3/ 3
-Problem 9      [5 pts.]      0.0       5/ 5
-Problem 10     [4 pts.]      0.0       4/ 4
+Category        Weight     Earned
+===========    ========    ======
+Problem 5.1    [ 5 pts.]      5.0
+Problem 5.2    [ 5 pts.]      4.0
+Problem 5.4    [ 5 pts.]      5.0
+Problem 5.6    [ 5 pts.]      4.0
+Problem 5.8    [10 pts.]      9.0
+Problem 6.1    [10 pts.]     10.0
+Problem 6.2    [10 pts.]      8.0
 
-      Subtotal [44 max]     44.0
-             Your Total      0.0
+       Subtotal [50 max]     50.0
+              Your Total     45.0
 
-         Letter grade   F
+         Letter grade   A-minus
 
-Homework 2 not attempted, or at least not visible in your repository.
+=================
+SPECIFIC COMMENTS:
 
-Too bad....  :(
+Problem 5.1 ~ correct
 
-RE-EVALUATION AT SEMESTER'S END
----------------------------------
-Your total: 44.0 out of 44.0 which is an A-plus
+Problem 5.2 ~ Monolithic is a better answer than two-tier.
+
+Problem 5.4 ~ “Three-tier” is less precise for this assignment but acceptable.
+
+Problem 5.6 ~ ClassyDraw should use a document-centric file-based structure,
+   not a database—this is explicitly emphasized in Stephens.
+
+Problem 5.8 ~ Your state machine is a bit off.  There is no way to enter a
+   number without a leading sign.
+
+Problem 6.1 ~ correct
+
+Problem 6.2 ~ You are missing a class in the heriarchy.  Line and Text
+   can be subclasses of Shape [the way you've defined it] but you need
+   a 'Fillable' class at that same level, with the other three classes
+   becoming subclasses to 'Fillable'.
 
 
+nice work!

@@ -1,0 +1,32 @@
+
+
+HW 2 - Piloni & Miles Textbook
+CMSI 4071 Fall 2025
+
+Category        Weight     Earned   Re-eval
+===========    ========    ======   =======
+Problem 1      [3 pts.]      0.0       3/ 3
+Problem 2      [4 pts.]      0.0       4/ 4
+Problem 3      [6 pts.]      0.0       6/ 6
+Problem 4      [9 pts.]      0.0       9/ 9
+Problem 5      [2 pts.]      0.0       2/ 2
+Problem 6      [7 pts.]      0.0       7/ 7
+Problem 7      [1 pt.]       0.0       1/ 1
+Problem 8      [3 pts.]      0.0       3/ 3
+Problem 9      [5 pts.]      0.0       5/ 5
+Problem 10     [4 pts.]      0.0       4/ 4
+
+      Subtotal [44 max]     44.0
+             Your Total      0.0
+
+         Letter grade   F
+
+Homework 2 not attempted, or at least not visible in your repository.
+
+Too bad....  :(
+
+RE-EVALUATION AT SEMESTER'S END
+---------------------------------
+Your total: 44.0 out of 44.0 which is an A-plus
+
+
