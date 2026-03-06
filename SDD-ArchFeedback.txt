@@ -1,0 +1,97 @@
+
+Documentation Feedback ~ Deliverable #3
+Software Design Document ~ Architecture
+CMSI 4072 Spring 2026 ~
+=======================================
+
+6.1 INTRODUCTION SECTION:
+   System objectives section
+      Strengths:
+         Provides multiple functional objectives including tracking income,
+            analyzing spending, and offering personalized recommendations.
+         The objectives connect clearly to system features.
+      Suggestions:
+         Distinguish between functional and non-functional objectives to
+            align with standard SDD expectations.
+         Add measurable targets such as update frequency, recommendation
+            accuracy, or latency expectations.
+         Include architectural objectives such as reliability, data
+            integrity, and ease of maintenance.
+
+   Hardware, software, and human interfaces section
+      Strengths:
+         Identifies hardware interfaces including iOS devices and Firebase
+            servers.
+         Explains software technologies such as SwiftUI, Firebase,
+            Python ML stack, and the LLM chatbot.
+         Gives a clear summary of human interfaces including dashboard, chat
+            interface, and notifications.
+      Suggestions:
+         Provide details on operating system versions, device capabilities,
+            and required network conditions.
+         Expand the human-interface section to include accessibility
+            expectations and user personas.
+         Clarify any constraints imposed by using third-party APIs such as
+            rate limits or quotas.
+
+
+6.2 ARCHITECTURAL DESIGN SECTION:
+   Major softwre components section
+      Strengths:
+         States that the system uses a client–server model with modular
+            component separation.
+         Describes a microservices-inspired backend division for financial
+            logic, AI, and user management.
+      Suggestions:
+         Add rationale for selecting the architectural style and how it
+            satisfies project goals.
+         Describe cross-cutting concerns such as logging, authentication
+            flows, and security layers.
+         Provide more detail on scaling strategy and how the architecture
+            handles heavy usage scenarios.
+
+   Major software interactions section
+      Strengths:
+         Explains interaction patterns such as frontend to backend via
+            HTTPS and backend to AI engine using API calls.
+         Describes role of notification service and LLM interaction for
+            chat features.
+      Suggestions:
+         Include a high-level sequence or flow diagram showing the
+            interactions described in text.
+         Clarify asynchronous vs synchronous behavior, especially with
+            notifications and ML inference.
+         Add error-handling flows, retry logic, and resilience expectations.
+
+   Architectural design diagrams section ~ no diagrams submitted
+      Strengths:
+
+      Suggestions:
+
+
+OVERALL ASSESSMENT:
+   INTRODUCTION                        1.0
+   System objectives                   1.0
+   H/W, S/W, Human I/F                 1.0
+
+   ARCHITECTURAL DESIGN SECTION:
+   Major softwre components            1.0
+   Major software interactions         1.0
+   Architectural design diagrams       0.0
+                                     ======
+   Subtotal                            5.0
+   ------------------------------------------------------
+   Total Percentage:  5/10 = 50% which is an F on this deliverable
+
+You need to add some diagrams to fill out the architectural view of your
+system.  Didn't you have some from last semester you could have included?
+
+Everything else looks good, but I don't really see much change between this
+document and last semester.  Your SRS reflected the additions, but your SDD
+doesn't really highlight any additional work, at least not obviously.  What
+*IS* there is great, though!
+
+Also, because this is a continuing group project, you were actually supposed
+to do a Test Plan or Test Procedure document, not an SDD, but since you did
+the SDD I evaluated that instead.
+
