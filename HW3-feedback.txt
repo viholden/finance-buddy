@@ -1,0 +1,54 @@
+
+
+HW 3 - Stephens Book Chapters 7 and 8
+CMSI 4072 Spring 2026
+
+Category        Weight     Earned
+===========    ========    ======
+Problem 7.1    [5 pts.]      0.0
+Problem 7.2    [4 pts.]      0.0
+Problem 7.4    [5 pts.]      0.0
+Problem 7.5    [4 pts.]      0.0
+Problem 7.7    [5 pts.]      0.0
+Problem 8.1    [5 pts.]      0.0
+Problem 8.3    [5 pts.]      0.0
+Problem 8.5    [4 pts.]      0.0
+Problem 8.9    [4 pts.]      0.0
+Problem 8.11   [5 pts.]      0.0
+Problem 8.12   [4 pts.]      0.0
+
+       Subtotal [50 max]     50.0
+              Your Total     00.0
+          0.0 out of 50.0 =  00.0%
+
+         Letter grade   F
+
+=================
+SPECIFIC COMMENTS:
+Problem 7.1
+   Correct
+Problem 7.2
+   Correct
+Problem 7.4
+   Correct
+Problem 7.5
+   Correct
+Problem 7.7
+   Correct
+Problem 8.1
+   Correct
+Problem 8.3
+   Correct
+Problem 8.5
+   Correct
+Problem 8.9
+   Correct
+Problem 8.11
+   Correct
+Problem 8.12
+   Correct
+
+DANG!  What's going on here....
+
+I'm so sorry to have to do this, ladies, but I can't evaluate something if
+there isn't anything there to evaluate...  :(
