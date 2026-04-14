@@ -1,0 +1,80 @@
+
+Documentation Feedback ~ Deliverable #4
+Software Design Document ~ Detailed Design
+CMSI 4072 Spring 2026
+==========================================
+
+DETAILED CLASS DESCRIPTIONS:
+   Strengths
+      The document clearly identifies the core domain classes that
+         define the Finance Buddy system
+   Suggestions
+      Expanding each class to include clearer method contracts, state
+         invariants, and interactions with other classes would make this
+         section implementation-ready.
+
+DETAILED INTERFACE DESCRIPTIONS:
+   Strengths
+      The document identifies key interfaces, including REST endpoints
+         for user and transaction management and a JSON-based interface
+         to the AI microservice.
+   Suggestions
+      Interface descriptions lack sufficient detail for a detailed
+         design document. Endpoints are listed, but request/response
+         schemas, authentication requirements, and error handling are
+         not specified.
+
+DETAILED DATA STRUCTURE DESCRIPTIONS:
+   Strengths
+      Including example JSON payloads is a strong practice and aids
+         developer understanding.
+   Suggestions
+      Constraints, invariants, and lifecycle expectations (for example,
+         when recommendations are generated or invalidated) are not
+         documented and should be added for completeness.
+
+DETAILED DESIGN DIAGRAMS:
+   Strengths
+      No actual diagrams are included, although the text alludes to what
+         they would describe graphically.
+   Suggestions
+      Include diagrams with explanations to show design concerns and
+         how they should be interpreted.
+
+DATABASE DESIGN AND DESCRIPTION:
+   Strengths
+      The database design identifies core entities and relationships
+         and explains the use of an ORM layer to manage persistence.
+   Suggestions
+      Security mechanisms are listed but not tied to specific database
+         operations or roles, making it harder to verify correctness
+         during implementation.
+
+
+----------------------------------------------
+OVERALL ASSESSMENT:
+   Category                          Points
+   Class Descriptions:                  3 of  3
+   Interface Descriptions:              3 of  3
+   Data structure Descriptions:         1 of  1
+   Design diagrams:                     1 of  3
+   Database design/descriptions:        2 of  2    [this is a gimme]
+                                     ===========
+   Subtotal                             8 of 10
+   ------------------------------------------------------
+   Total Percentage:  8/10 = 80% which is a B on this deliverable
+
+
+OVERALL EVALUATION
+==================
+As a **detailed design–level SDD**, this document is **partially
+complete**. It provides a solid conceptual overview and outlines
+key classes, interfaces, and persistence concerns, but most
+sections remain closer to architectural or high-level design.
+
+To reach full detailed-design completeness, the document would
+need significantly more specificity in CSU definitions,
+interface contracts, data structures, and diagram explanations.
+With these expansions, it could evolve into a strong,
+implementation-ready design suitable for both waterfall review
+and agile development.
